@@ -2,18 +2,20 @@
 
 ## Description
 AutoRepo is a Python-based application that provides automated Git repository management with scheduling capabilities. It allows users to:
-- Scan directories for Git repositories
-- Schedule automatic updates
-- Pull updates from remote repositories
-- Monitor repository status through a GUI interface
-- Log all operations with detailed tracking
+- Scan directories recursively for Git repositories (up to configurable depth)
+- Schedule automatic updates at specific times and days
+- Pull updates from remote repositories safely (without pushing)
+- Monitor repository status through a modern PyQt6-based GUI interface
+- Handle dirty repositories gracefully with configurable error handling
+- Log all operations with detailed tracking in JSON or CSV format
 
 ## Installation & Setup
 
 ### Prerequisites
 - Python 3.13 or higher
 - Poetry package manager
-- Windows OS (for scheduler functionality)
+- Windows OS (required for scheduler functionality)
+- Git installed and configured
 
 ### Installation Steps
 1. Clone the repository:
@@ -32,34 +34,69 @@ poetry install
 poetry run python main.py
 ```
 
+## Features
+
+### GUI Interface
+- Simple and intuitive PyQt6-based interface
+- Directory selection for repository scanning
+- Real-time status updates during operations
+- Multi-threaded repository updates to maintain responsiveness
+
+### Git Operations
+- Safe repository pulling (prevents accidental pushes)
+- Dirty repository detection and handling
+- Configurable scan depth for repository discovery
+- Detailed operation logging
+
+### Scheduling
+- Windows Task Scheduler integration
+- Configurable update times and days
+- Enable/disable scheduling through settings
+- Immediate manual updates when needed
+
+### Logging System
+- Detailed operation tracking
+- Multiple format support (JSON/CSV)
+- Rolling or session-based log files
+- Operation statistics and error tracking
+
 ## Directory Structure
 ```
 autorepo/
 ├── AutomaticRepoUpdater/
-│   └── git_operations.py
-├── main.py
+│   └── git_operations.py      # Git repository management
+├── main.py                    # Application entry point
 ├── README.md
-├── scheduler.py
+├── scheduler.py               # Windows task scheduling
 ├── ui/
 │   ├── __init__.py
-│   ├── main_window.py
-│   └── ui.py
+│   ├── main_window.py        # PyQt6 main interface
+│   └── ui.py                 # Additional UI components
 └── utils/
     ├── __init__.py
-    ├── logger.py
-    └── settings.py
+    ├── logger.py             # Logging functionality
+    └── settings.py           # Configuration management
 ```
+
+## Configuration
+The application stores its configuration in `~/.autorepo/settings.json` and includes:
+- Theme preferences (light/dark)
+- Last used directory
+- Scheduling settings
+- Error handling preferences
+- Logging configuration
 
 ## Changelog
 
 ### Version 0.1.0 (2024-11-21)
 - Initial release
-- Basic GUI implementation with PyQt6
+- PyQt6-based GUI implementation
 - Git repository scanning and updating
-- Scheduling functionality
-- Logging system
+- Windows Task Scheduler integration
+- JSON/CSV logging system
 - Settings management
 - Dark/Light theme support
+- Multi-threaded repository updates
 
 ## License
 
