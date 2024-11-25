@@ -4,7 +4,6 @@ Handles the primary user interface components
 and window management using PyQt6.
 """
 
-import sys
 from PyQt6.QtWidgets import (
     QMainWindow,
     QVBoxLayout,
@@ -15,7 +14,7 @@ from PyQt6.QtWidgets import (
     QMessageBox
 )
 from PyQt6.QtCore import QThread, pyqtSignal
-from utils.git_operations import GitOperations
+from AutomaticRepoUpdater.git_operations import GitOperations
 
 
 class MainWindow(QMainWindow):
