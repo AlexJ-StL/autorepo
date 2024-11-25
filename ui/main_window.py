@@ -16,10 +16,13 @@ from PyQt6.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
     QTabWidget,
-    QFrame
+    QFrame,
+    QGroupBox, QComboBox, QCheckBox, QTextEdit
 )
 from PyQt6.QtCore import QThread, pyqtSignal
 from AutomaticRepoUpdater.git_operations import GitOperations
+import json
+from .themes import Themes
 
 
 class MainWindow(QMainWindow):
@@ -62,6 +65,14 @@ class MainWindow(QMainWindow):
         self.status_label = QLabel("Ready")
         main_layout.addWidget(self.status_label)
 
+        settings_widget = self._create_settings_tab()
+        self.tab_widget.addTab(settings_widget, "Settings")
+        
+        logs_widget = self._create_logs_tab()
+        self.tab_widget.addTab(logs_widget, "Logs")
+        
+        self._apply_theme()
+
     def select_directory(self):
         directory = QFileDialog.getExistingDirectory(
             self, "Select Directory", self.app.settings.last_directory
@@ -80,6 +91,8 @@ class MainWindow(QMainWindow):
         self.update_thread.finished.connect(self.update_finished)
         self.update_thread.update_signal.connect(self.update_status)
         self.update_thread.start()
+
+        self.status_label.setText(f"Logs saved to {self.app.logger.log_dir}")
 
     def update_finished(self):
         self.status_label.setText("Update complete")
