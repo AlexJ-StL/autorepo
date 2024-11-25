@@ -59,14 +59,10 @@ class GitOperations:
             # Perform pull
             result = repo.remote().pull()
 
-            # Restore push URL if it existed
-            with repo.remote().config_writer as cw:
-                old_push_url = cw.get("url")
-            if old_push_url:
-                repo.remote().set_url(old_push_url, push=True)
-                cw.set("url", "")
-
         result = repo.remote().pull()
+
+        if old_push_url:
+            repo.remote().set_url(old_push_url, push=True)
 
             if old_push_url:
                 with repo.remote().config_writer as cw:
