@@ -16,8 +16,6 @@ class GitOperations:
             if self._is_git_repo(path):
                 git_repos.append(path)
 
-        return git_repos
-
         return [
             path for path in self._walk_with_depth(root, max_depth)
             if self._is_git_repo(path)
@@ -46,9 +44,6 @@ class GitOperations:
         try:
             repo = Repo(repo_path)
             if repo.is_dirty():
-                self.logger.log_event(
-                    f"Skipping pull for dirty repo: {repo_path}"
-                )
                 self.logger.log_event(
                     f"Skipping pull for dirty repo: {repo_path}"
                 )
