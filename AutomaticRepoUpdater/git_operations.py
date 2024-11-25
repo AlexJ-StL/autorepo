@@ -59,10 +59,10 @@ class GitOperations:
             # Perform pull
             result = repo.remote().pull()
 
-        if old_push_url:
-            repo.remote().set_url(old_push_url, push=True)
-        self.logger.log_event(f"Successfully pulled: {repo_path}")
-        return True, "Success"
+            if old_push_url:
+                repo.remote().set_url(old_push_url, push=True)
+            self.logger.log_event(f"Successfully pulled: {repo_path}")
+            return True, "Success"
 
         except GitCommandError as e:
             self.logger.log_error(f"Git error in {repo_path}: {str(e)}")
