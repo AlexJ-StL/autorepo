@@ -1,14 +1,24 @@
+from typing import List, Tuple, Generator
 from git import Repo, GitCommandError
 from pathlib import Path
 
 
 class GitOperations:
-    def __init__(self, settings, logger):
+    def __init__(self, settings, logger) -> None:
         self.settings = settings
         self.logger = logger
 
-    def scan_directories(self, root_path, max_depth=2):
-        """Scan directories up to specified depth for git repositories"""
+    def scan_directories(self, root_path: str, max_depth: int = 2) -> List[Path]:
+        """
+        Scan directories up to specified depth for git repositories.
+        
+        Args:
+            root_path: The root directory to start scanning from
+            max_depth: Maximum depth to scan (default: 2)
+            
+        Returns:
+            List of Path objects representing git repositories
+        """
         git_repos = []
         root = Path(root_path)
 
@@ -16,31 +26,60 @@ class GitOperations:
             if self._is_git_repo(path):
                 git_repos.append(path)
 
-        return [
-            path for path in self._walk_with_depth(root, max_depth)
-            if self._is_git_repo(path)
-        ]
+        return git_repos
 
-    def _walk_with_depth(self, path, max_depth):
-        """Helper to walk directory with depth limit"""
+    def _walk_with_depth(self, path: Path, max_depth: int) -> Generator[Path, None, None]:
+        """
+        Helper to walk directory with depth limit.
+        
+        Args:
+            path: Directory path to walk
+            max_depth: Maximum depth to traverse
+            
+        Yields:
+            Path objects for each valid directory
+        """
         path = Path(path)
         if max_depth <= 0:
             return
-        for item in path.iterdir():
-            if item.is_dir() and not item.name.startswith('.'):
-                yield item
-                yield from self._walk_with_depth(item, max_depth - 1)
+        try:
+            for item in path.iterdir():
+                if item.is_dir() and not item.name.startswith('.'):
+                    yield item
+                    yield from self._walk_with_depth(item, max_depth - 1)
+        except PermissionError:
+            self.logger.log_error(f"Permission denied accessing: {path}")
+        except OSError as e:
+            self.logger.log_error(f"Error accessing {path}: {e}")
 
-    def _is_git_repo(self, path):
-        """Check if directory is a git repository"""
+    def _is_git_repo(self, path: Path) -> bool:
+        """
+        Check if directory is a git repository.
+        
+        Args:
+            path: Directory path to check
+            
+        Returns:
+            True if directory is a git repo, False otherwise
+        """
         try:
             Repo(path)
             return True
-        except:
+        except GitCommandError:
+            return False
+        except Exception:
             return False
 
-    def pull_repository(self, repo_path):
-        """Pull updates from remote without pushing"""
+    def pull_repository(self, repo_path: str) -> Tuple[bool, str]:
+        """
+        Pull updates from remote without pushing.
+        
+        Args:
+            repo_path: Path to the git repository
+            
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
         try:
             repo = Repo(repo_path)
             if repo.is_dirty():
