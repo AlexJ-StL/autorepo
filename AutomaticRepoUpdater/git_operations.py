@@ -8,14 +8,18 @@ class GitOperations:
         self.settings = settings
         self.logger = logger
 
-    def scan_directories(self, root_path: str, max_depth: int = 2) -> List[Path]:
+    def scan_directories(
+        self,
+        root_path: str,
+        max_depth: int = 2
+    ) -> List[Path]:
         """
         Scan directories up to specified depth for git repositories.
-        
+
         Args:
             root_path: The root directory to start scanning from
             max_depth: Maximum depth to scan (default: 2)
-            
+
         Returns:
             List of Path objects representing git repositories
         """
@@ -28,14 +32,18 @@ class GitOperations:
 
         return git_repos
 
-    def _walk_with_depth(self, path: Path, max_depth: int) -> Generator[Path, None, None]:
+    def _walk_with_depth(
+        self,
+        path: Path,
+        max_depth: int
+    ) -> Generator[Path, None, None]:
         """
         Helper to walk directory with depth limit.
-        
+
         Args:
             path: Directory path to walk
             max_depth: Maximum depth to traverse
-            
+
         Yields:
             Path objects for each valid directory
         """
@@ -55,10 +63,10 @@ class GitOperations:
     def _is_git_repo(self, path: Path) -> bool:
         """
         Check if directory is a git repository.
-        
+
         Args:
             path: Directory path to check
-            
+
         Returns:
             True if directory is a git repo, False otherwise
         """
@@ -73,10 +81,10 @@ class GitOperations:
     def pull_repository(self, repo_path: str) -> Tuple[bool, str]:
         """
         Pull updates from remote without pushing.
-        
+
         Args:
             repo_path: Path to the git repository
-            
+
         Returns:
             Tuple of (success: bool, message: str)
         """
