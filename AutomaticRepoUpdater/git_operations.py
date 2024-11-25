@@ -99,15 +99,20 @@ class GitOperations:
             # Ensure we're not pushing
             old_push_url = None
             try:
-                old_push_url = repo.remote().set_url(push_url="", push=True)
-            except:
+                remote = repo.remote()
+                old_push_url = remote.url
+                remote.set_url(new_url=remote.url, push_url="", push=True)
+            except GitCommandError:
                 pass
 
             # Perform pull
-            result = repo.remote().pull()
+            pull_info = repo.remote().pull()
+            pull_result = [info.note for info in pull_info]
+            self.logger.log_event(f"Pull details: {', '.join(pull_result)}")
 
+            # Restore push URL if we had one
             if old_push_url:
-                repo.remote().set_url(old_push_url, push=True)
+                repo.remote().set_url(new_url=old_push_url, push=True)
             self.logger.log_event(f"Successfully pulled: {repo_path}")
             return True, "Success"
 
