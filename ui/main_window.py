@@ -11,7 +11,12 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QLabel,
     QFileDialog,
-    QMessageBox
+    QMessageBox,
+    QHBoxLayout,
+    QSpacerItem,
+    QSizePolicy,
+    QTabWidget,
+    QFrame
 )
 from PyQt6.QtCore import QThread, pyqtSignal
 from AutomaticRepoUpdater.git_operations import GitOperations
@@ -26,21 +31,36 @@ class MainWindow(QMainWindow):
         self.init_ui()
 
     def init_ui(self):
+        self.showMaximized()
         self.setWindowTitle("Automatic Repo Updater")
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        layout = QVBoxLayout(self.central_widget)
-
+    
+        main_layout = QVBoxLayout(self.central_widget)
+    
+        toolbar_layout = QHBoxLayout()
+    
+        left_buttons = QFrame()
+        left_layout = QHBoxLayout(left_buttons)
+    
         self.select_dir_button = QPushButton("Select Directory")
         self.select_dir_button.clicked.connect(self.select_directory)
-        layout.addWidget(self.select_dir_button)
-
         self.update_button = QPushButton("Update Repositories")
         self.update_button.clicked.connect(self.update_repositories)
-        layout.addWidget(self.update_button)
-
+    
+        left_layout.addWidget(self.select_dir_button)
+        left_layout.addWidget(self.update_button)
+    
+        toolbar_layout.addWidget(left_buttons)
+        toolbar_layout.addStretch()  
+    
+        main_layout.addLayout(toolbar_layout)
+    
+        self.tab_widget = QTabWidget()
+        main_layout.addWidget(self.tab_widget)
+    
         self.status_label = QLabel("Ready")
-        layout.addWidget(self.status_label)
+        main_layout.addWidget(self.status_label)
 
     def select_directory(self):
         directory = QFileDialog.getExistingDirectory(
