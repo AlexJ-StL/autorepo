@@ -36,41 +36,70 @@ class MainWindow(QMainWindow):
     def init_ui(self):
         self.showMaximized()
         self.setWindowTitle("Automatic Repo Updater")
+
+        # Create main widget and layout
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-    
         main_layout = QVBoxLayout(self.central_widget)
-    
-        toolbar_layout = QHBoxLayout()
-    
-        left_buttons = QFrame()
-        left_layout = QHBoxLayout(left_buttons)
-    
-        self.select_dir_button = QPushButton("Select Directory")
-        self.select_dir_button.clicked.connect(self.select_directory)
-        self.update_button = QPushButton("Update Repositories")
-        self.update_button.clicked.connect(self.update_repositories)
-    
-        left_layout.addWidget(self.select_dir_button)
-        left_layout.addWidget(self.update_button)
-    
-        toolbar_layout.addWidget(left_buttons)
-        toolbar_layout.addStretch()  
-    
-        main_layout.addLayout(toolbar_layout)
-    
-        self.tab_widget = QTabWidget()
-        main_layout.addWidget(self.tab_widget)
-    
-        self.status_label = QLabel("Ready")
-        main_layout.addWidget(self.status_label)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(20, 20, 20, 20)
 
-        settings_widget = self._create_settings_tab()
-        self.tab_widget.addTab(settings_widget, "Settings")
-        
-        logs_widget = self._create_logs_tab()
-        self.tab_widget.addTab(logs_widget, "Logs")
-        
+        # Create header with app title and theme toggle
+        header = QWidget()
+        header_layout = QHBoxLayout(header)
+        title_label = QLabel("Automatic Repo Updater")
+        title_label.setObjectName("app-title")
+        header_layout.addWidget(title_label)
+
+        theme_switch = QPushButton()
+        theme_switch.setObjectName("theme-switch")
+        theme_switch.clicked.connect(self._toggle_theme)
+        header_layout.addWidget(
+            theme_switch,
+            alignment=Qt.AlignmentFlag.AlignRight
+        )
+        main_layout.addWidget(header)
+
+        # Action buttons in a card-like container
+        action_card = QFrame()
+        action_card.setObjectName("action-card")
+        action_layout = QHBoxLayout(action_card)
+
+        self.select_dir_button = QPushButton("Select Directory")
+        self.select_dir_button.setObjectName("primary-button")
+        self.select_dir_button.clicked.connect(self.select_directory)
+
+        self.update_button = QPushButton("Update Repositories")
+        self.update_button.setObjectName("primary-button")
+        self.update_button.clicked.connect(self.update_repositories)
+
+        action_layout.addWidget(self.select_dir_button)
+        action_layout.addWidget(self.update_button)
+        main_layout.addWidget(action_card)
+
+        # Tab widget with modern styling
+        self.tab_widget = QTabWidget()
+        self.tab_widget.setObjectName("main-tabs")
+
+        # Add tabs
+        self.tab_widget.addTab(self._create_status_tab(), "Status")
+        self.tab_widget.addTab(self._create_settings_tab(), "Settings")
+        self.tab_widget.addTab(self._create_logs_tab(), "Logs")
+
+        main_layout.addWidget(self.tab_widget)
+
+        # Status bar with modern styling
+        status_bar = QFrame()
+        status_bar.setObjectName("status-bar")
+        status_layout = QHBoxLayout(status_bar)
+
+        self.status_label = QLabel("Ready")
+        self.status_label.setObjectName("status-text")
+        status_layout.addWidget(self.status_label)
+
+        main_layout.addWidget(status_bar)
+
+        # Apply initial theme
         self._apply_theme()
 
     def select_directory(self):
