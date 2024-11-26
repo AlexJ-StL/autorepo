@@ -85,6 +85,7 @@ class MainWindow(QMainWindow):
         self.tab_widget.addTab(self._create_status_tab(), "Status")
         self.tab_widget.addTab(self._create_settings_tab(), "Settings")
         self.tab_widget.addTab(self._create_logs_tab(), "Logs")
+        self.tab_widget.addTab(self._create_scheduler_tab(), "Schedule")
 
         main_layout.addWidget(self.tab_widget)
 
@@ -298,6 +299,155 @@ class MainWindow(QMainWindow):
         self._refresh_logs()
         
         return logs_widget
+
+    def _create_scheduler_tab(self):
+        """Create and return the scheduler tab widget"""
+        scheduler_widget = QWidget()
+        layout = QVBoxLayout(scheduler_widget)
+        layout.setSpacing(15)
+
+        # Enable Scheduling Group
+        schedule_group = QGroupBox("Schedule Settings")
+        schedule_layout = QVBoxLayout(schedule_group)
+        
+        # Enable scheduling checkbox
+        enable_schedule = QCheckBox("Enable Scheduled Updates")
+        enable_schedule.setChecked(self.app.settings.get("schedule_enabled", False))
+        enable_schedule.toggled.connect(
+            lambda x: self.app.settings.set("schedule_enabled", x)
+        )
+        schedule_layout.addWidget(enable_schedule)
+
+        # Time selection
+        time_layout = QHBoxLayout()
+        time_label = QLabel("Update Time:")
+        hour_combo = QComboBox()
+        hour_combo.addItems([f"{i:02d}" for i in range(24)])
+        hour_combo.setCurrentText(
+            str(self.app.settings.get("schedule_hour", "09")).zfill(2)
+        )
+        
+        minute_combo = QComboBox()
+        minute_combo.addItems([f"{i:02d}" for i in range(0, 60, 15)])
+        minute_combo.setCurrentText(
+            str(self.app.settings.get("schedule_minute", "00")).zfill(2)
+        )
+        
+        time_layout.addWidget(time_label)
+        time_layout.addWidget(hour_combo)
+        time_layout.addWidget(QLabel(":"))
+        time_layout.addWidget(minute_combo)
+        time_layout.addStretch()
+        schedule_layout.addLayout(time_layout)
+
+        # Days selection
+        days_layout = QHBoxLayout()
+        days_label = QLabel("Run on days:")
+        days_layout.addWidget(days_label)
+        
+        days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        self.day_checkboxes = {}
+        saved_days = self.app.settings.get("schedule_days", ["Mon", "Wed", "Fri"])
+        
+        for day in days:
+            checkbox = QCheckBox(day)
+            checkbox.setChecked(day in saved_days)
+            checkbox.toggled.connect(
+                lambda x, d=day: self._update_schedule_days(d, x)
+            )
+            self.day_checkboxes[day] = checkbox
+            days_layout.addWidget(checkbox)
+        
+        schedule_layout.addLayout(days_layout)
+
+        # Notification preferences
+        notif_layout = QHBoxLayout()
+        notif_label = QLabel("Notification before update:")
+        notif_combo = QComboBox()
+        notif_combo.addItems(["1 minute", "5 minutes", "15 minutes", "30 minutes"])
+        notif_combo.setCurrentText(
+            self.app.settings.get("schedule_notification", "5 minutes")
+        )
+        notif_combo.currentTextChanged.connect(
+            lambda x: self.app.settings.set("schedule_notification", x)
+        )
+        notif_layout.addWidget(notif_label)
+        notif_layout.addWidget(notif_combo)
+        notif_layout.addStretch()
+        schedule_layout.addLayout(notif_layout)
+
+        # Add the schedule group to main layout
+        layout.addWidget(schedule_group)
+
+        # Current Schedule Status Group
+        status_group = QGroupBox("Schedule Status")
+        status_layout = QVBoxLayout(status_group)
+        
+        self.next_run_label = QLabel("Next scheduled run: Not scheduled")
+        status_layout.addWidget(self.next_run_label)
+        
+        self.last_run_label = QLabel("Last run: Never")
+        status_layout.addWidget(self.last_run_label)
+        
+        # Manual schedule update button
+        update_schedule_btn = QPushButton("Update Schedule")
+        update_schedule_btn.setObjectName("primary-button")
+        update_schedule_btn.clicked.connect(self._update_schedule)
+        status_layout.addWidget(update_schedule_btn)
+        
+        layout.addWidget(status_group)
+        
+        # Add stretch to push everything to the top
+        layout.addStretch()
+        
+        # Connect time selection changes
+        hour_combo.currentTextChanged.connect(
+            lambda x: self._update_schedule_time(x, minute_combo.currentText())
+        )
+        minute_combo.currentTextChanged.connect(
+            lambda x: self._update_schedule_time(hour_combo.currentText(), x)
+        )
+        
+        return scheduler_widget
+
+    def _update_schedule_days(self, day, checked):
+        """Update the scheduled days in settings"""
+        current_days = self.app.settings.get("schedule_days", [])
+        if checked and day not in current_days:
+            current_days.append(day)
+        elif not checked and day in current_days:
+            current_days.remove(day)
+        self.app.settings.set("schedule_days", current_days)
+        self._update_schedule()
+
+    def _update_schedule_time(self, hour, minute):
+        """Update the scheduled time in settings"""
+        self.app.settings.set("schedule_hour", int(hour))
+        self.app.settings.set("schedule_minute", int(minute))
+        self._update_schedule()
+
+    def _update_schedule(self):
+        """Update the schedule based on current settings"""
+        if self.app.settings.get("schedule_enabled", False):
+            try:
+                self.app.scheduler.update_schedule()
+                next_run = self.app.scheduler.get_next_run()
+                last_run = self.app.scheduler.get_last_run()
+                
+                self.next_run_label.setText(
+                    f"Next scheduled run: {next_run if next_run else 'Not scheduled'}"
+                )
+                self.last_run_label.setText(
+                    f"Last run: {last_run if last_run else 'Never'}"
+                )
+            except Exception as e:
+                QMessageBox.warning(
+                    self,
+                    "Schedule Update Error",
+                    f"Failed to update schedule: {str(e)}"
+                )
+        else:
+            self.next_run_label.setText("Next scheduled run: Not scheduled")
 
     def _refresh_logs(self):
         """Refresh the logs display"""
