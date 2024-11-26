@@ -207,4 +207,28 @@ class Themes:
             QLineEdit:focus, QTextEdit:focus {{
                 border: 2px solid {colors["primary"]};
             }}
+            
+            #log-display {{
+                background-color: {colors["card_bg"]};
+                color: {colors["text"]};
+                border: 1px solid {colors["border"]};
+                border-radius: 4px;
+                padding: 10px;
+                font-family: monospace;
+            }}
+            
+            QGroupBox {{
+                background-color: {colors["card_bg"]};
+                border: 1px solid {colors["border"]};
+                border-radius: 4px;
+                margin-top: 1em;
+                padding-top: 1em;
+            }}
+            
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 3px 0 3px;
+                color: {colors["text"]};
+            }}
         """

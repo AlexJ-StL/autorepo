@@ -245,14 +245,132 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(logs_widget)
         layout.setSpacing(15)
 
-        logs_label = QLabel("Logs:")
-        layout.addWidget(logs_label)
+        # Controls section
+        controls_group = QGroupBox("Log Controls")
+        controls_layout = QHBoxLayout(controls_group)
 
-        logs_text = QTextEdit()
-        logs_text.setReadOnly(True)
-        layout.addWidget(logs_text)
+        # Refresh button
+        refresh_btn = QPushButton("Refresh Logs")
+        refresh_btn.setObjectName("primary-button")
+        refresh_btn.clicked.connect(self._refresh_logs)
+        
+        # Clear button
+        clear_btn = QPushButton("Clear Logs")
+        clear_btn.setObjectName("primary-button")
+        clear_btn.clicked.connect(self._clear_logs)
+        
+        # Filter dropdown
+        filter_combo = QComboBox()
+        filter_combo.addItems(["All", "Info", "Warning", "Error", "Success"])
+        filter_combo.currentTextChanged.connect(self._filter_logs)
+        
+        controls_layout.addWidget(refresh_btn)
+        controls_layout.addWidget(clear_btn)
+        controls_layout.addWidget(QLabel("Filter:"))
+        controls_layout.addWidget(filter_combo)
+        controls_layout.addStretch()
+        
+        layout.addWidget(controls_group)
 
+        # Log display
+        log_display_group = QGroupBox("Log Output")
+        log_layout = QVBoxLayout(log_display_group)
+
+        self.logs_text = QTextEdit()
+        self.logs_text.setReadOnly(True)
+        self.logs_text.setObjectName("log-display")
+        log_layout.addWidget(self.logs_text)
+
+        # Statistics section
+        stats_layout = QHBoxLayout()
+        self.total_logs_label = QLabel("Total Logs: 0")
+        self.error_count_label = QLabel("Errors: 0")
+        self.warning_count_label = QLabel("Warnings: 0")
+        stats_layout.addWidget(self.total_logs_label)
+        stats_layout.addWidget(self.error_count_label)
+        stats_layout.addWidget(self.warning_count_label)
+        stats_layout.addStretch()
+        log_layout.addLayout(stats_layout)
+
+        layout.addWidget(log_display_group)
+
+        # Add the helper methods
+        self._refresh_logs()
+        
         return logs_widget
+
+    def _refresh_logs(self):
+        """Refresh the logs display"""
+        try:
+            logs = self.app.logger.get_recent_logs()
+            self.logs_text.clear()
+            
+            total_logs = len(logs)
+            error_count = sum(1 for log in logs if log.get('level') == 'ERROR')
+            warning_count = sum(1 for log in logs if log.get('level') == 'WARNING')
+            
+            for log in logs:
+                self._format_and_append_log(log)
+                
+            self.total_logs_label.setText(f"Total Logs: {total_logs}")
+            self.error_count_label.setText(f"Errors: {error_count}")
+            self.warning_count_label.setText(f"Warnings: {warning_count}")
+        except Exception as e:
+            self.logs_text.setText(f"Error loading logs: {str(e)}")
+
+    def _clear_logs(self):
+        """Clear the logs display and optionally the log file"""
+        reply = QMessageBox.question(
+            self,
+            'Clear Logs',
+            'Do you want to clear all logs? This cannot be undone.',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                self.app.logger.clear_logs()
+                self.logs_text.clear()
+                self._refresh_logs()
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to clear logs: {str(e)}")
+
+    def _filter_logs(self, filter_type):
+        """Filter logs based on selected type"""
+        try:
+            logs = self.app.logger.get_recent_logs()
+            self.logs_text.clear()
+            
+            filtered_logs = logs
+            if filter_type != "All":
+                filtered_logs = [log for log in logs if log.get('level') == filter_type.upper()]
+                
+            for log in filtered_logs:
+                self._format_and_append_log(log)
+        except Exception as e:
+            self.logs_text.setText(f"Error filtering logs: {str(e)}")
+
+    def _format_and_append_log(self, log):
+        """Format and append a single log entry to the display"""
+        timestamp = log.get('timestamp', '')
+        level = log.get('level', 'INFO')
+        message = log.get('message', '')
+        
+        # Color coding based on log level
+        color = {
+            'ERROR': '#F56565',
+            'WARNING': '#D69E2E',
+            'SUCCESS': '#38A169',
+            'INFO': self.app.settings.get_theme_colors()['text']
+        }.get(level, self.app.settings.get_theme_colors()['text'])
+        
+        formatted_log = (
+            f'<span style="color: {color}">'
+            f'[{timestamp}] {level}: {message}'
+            f'</span><br>'
+        )
+        self.logs_text.insertHtml(formatted_log)
 
 
 class UpdateThread(QThread):
