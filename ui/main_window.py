@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
     QFrame,
     QGroupBox, QComboBox, QCheckBox, QTextEdit
 )
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from AutomaticRepoUpdater.git_operations import GitOperations
 import json
 from .themes import Themes
