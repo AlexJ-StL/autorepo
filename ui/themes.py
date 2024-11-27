@@ -235,5 +235,6 @@ class Themes:
             QLabel#schedule-status-enabled { color: #27AE60; }
             QLabel#schedule-status-disabled { color: #E74C3C; }
             QLabel#schedule-status-pending { color: #F39C12; }
+        }
 
         """
