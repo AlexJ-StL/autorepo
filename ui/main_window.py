@@ -154,7 +154,7 @@ class MainWindow(QMainWindow):
         # Repository Settings Group
         repo_group = QGroupBox("Repository Settings")
         repo_layout = QVBoxLayout(repo_group)
-        
+
         # Max depth setting
         depth_layout = QHBoxLayout()
         depth_label = QLabel("Maximum Repository Depth:")
@@ -182,7 +182,7 @@ class MainWindow(QMainWindow):
         # Notification Settings Group
         notif_group = QGroupBox("Notification Settings")
         notif_layout = QVBoxLayout(notif_group)
-        
+
         # Enable notifications
         enable_notif = QCheckBox("Enable Notifications")
         enable_notif.setChecked(self.app.settings.get("notifications_enabled", True))
@@ -204,7 +204,7 @@ class MainWindow(QMainWindow):
         # Logging Settings Group
         log_group = QGroupBox("Logging Settings")
         log_layout = QVBoxLayout(log_group)
-        
+
         # Log format selection
         format_layout = QHBoxLayout()
         format_label = QLabel("Log Format:")
@@ -254,23 +254,23 @@ class MainWindow(QMainWindow):
         refresh_btn = QPushButton("Refresh Logs")
         refresh_btn.setObjectName("primary-button")
         refresh_btn.clicked.connect(self._refresh_logs)
-        
+
         # Clear button
         clear_btn = QPushButton("Clear Logs")
         clear_btn.setObjectName("primary-button")
         clear_btn.clicked.connect(self._clear_logs)
-        
+
         # Filter dropdown
         filter_combo = QComboBox()
         filter_combo.addItems(["All", "Info", "Warning", "Error", "Success"])
         filter_combo.currentTextChanged.connect(self._filter_logs)
-        
+
         controls_layout.addWidget(refresh_btn)
         controls_layout.addWidget(clear_btn)
         controls_layout.addWidget(QLabel("Filter:"))
         controls_layout.addWidget(filter_combo)
         controls_layout.addStretch()
-        
+
         layout.addWidget(controls_group)
 
         # Log display
@@ -297,7 +297,7 @@ class MainWindow(QMainWindow):
 
         # Add the helper methods
         self._refresh_logs()
-        
+
         return logs_widget
 
     def _create_scheduler_tab(self):
@@ -309,7 +309,7 @@ class MainWindow(QMainWindow):
         # Enable Scheduling Group
         schedule_group = QGroupBox("Schedule Settings")
         schedule_layout = QVBoxLayout(schedule_group)
-        
+
         # Enable scheduling checkbox
         enable_schedule = QCheckBox("Enable Scheduled Updates")
         enable_schedule.setChecked(self.app.settings.get("schedule_enabled", False))
@@ -326,13 +326,13 @@ class MainWindow(QMainWindow):
         hour_combo.setCurrentText(
             str(self.app.settings.get("schedule_hour", "09")).zfill(2)
         )
-        
+
         minute_combo = QComboBox()
         minute_combo.addItems([f"{i:02d}" for i in range(0, 60, 15)])
         minute_combo.setCurrentText(
             str(self.app.settings.get("schedule_minute", "00")).zfill(2)
         )
-        
+
         time_layout.addWidget(time_label)
         time_layout.addWidget(hour_combo)
         time_layout.addWidget(QLabel(":"))
@@ -344,11 +344,11 @@ class MainWindow(QMainWindow):
         days_layout = QHBoxLayout()
         days_label = QLabel("Run on days:")
         days_layout.addWidget(days_label)
-        
+
         days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         self.day_checkboxes = {}
         saved_days = self.app.settings.get("schedule_days", ["Mon", "Wed", "Fri"])
-        
+
         for day in days:
             checkbox = QCheckBox(day)
             checkbox.setChecked(day in saved_days)
@@ -357,7 +357,7 @@ class MainWindow(QMainWindow):
             )
             self.day_checkboxes[day] = checkbox
             days_layout.addWidget(checkbox)
-        
+
         schedule_layout.addLayout(days_layout)
 
         # Notification preferences
@@ -382,24 +382,24 @@ class MainWindow(QMainWindow):
         # Current Schedule Status Group
         status_group = QGroupBox("Schedule Status")
         status_layout = QVBoxLayout(status_group)
-        
+
         self.next_run_label = QLabel("Next scheduled run: Not scheduled")
         status_layout.addWidget(self.next_run_label)
-        
+
         self.last_run_label = QLabel("Last run: Never")
         status_layout.addWidget(self.last_run_label)
-        
+
         # Manual schedule update button
         update_schedule_btn = QPushButton("Update Schedule")
         update_schedule_btn.setObjectName("primary-button")
         update_schedule_btn.clicked.connect(self._update_schedule)
         status_layout.addWidget(update_schedule_btn)
-        
+
         layout.addWidget(status_group)
-        
+
         # Add stretch to push everything to the top
         layout.addStretch()
-        
+
         # Connect time selection changes
         hour_combo.currentTextChanged.connect(
             lambda x: self._update_schedule_time(x, minute_combo.currentText())
@@ -407,7 +407,7 @@ class MainWindow(QMainWindow):
         minute_combo.currentTextChanged.connect(
             lambda x: self._update_schedule_time(hour_combo.currentText(), x)
         )
-        
+
         return scheduler_widget
 
     def _update_schedule_days(self, day, checked):
@@ -433,7 +433,7 @@ class MainWindow(QMainWindow):
                 self.app.scheduler.update_schedule()
                 next_run = self.app.scheduler.get_next_run()
                 last_run = self.app.scheduler.get_last_run()
-                
+
                 self.next_run_label.setText(
                     f"Next scheduled run: {next_run if next_run else 'Not scheduled'}"
                 )
@@ -454,14 +454,14 @@ class MainWindow(QMainWindow):
         try:
             logs = self.app.logger.get_recent_logs()
             self.logs_text.clear()
-            
+
             total_logs = len(logs)
             error_count = sum(1 for log in logs if log.get('level') == 'ERROR')
             warning_count = sum(1 for log in logs if log.get('level') == 'WARNING')
-            
+
             for log in logs:
                 self._format_and_append_log(log)
-                
+
             self.total_logs_label.setText(f"Total Logs: {total_logs}")
             self.error_count_label.setText(f"Errors: {error_count}")
             self.warning_count_label.setText(f"Warnings: {warning_count}")
@@ -477,7 +477,7 @@ class MainWindow(QMainWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
-        
+
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 self.app.logger.clear_logs()
@@ -491,11 +491,11 @@ class MainWindow(QMainWindow):
         try:
             logs = self.app.logger.get_recent_logs()
             self.logs_text.clear()
-            
+
             filtered_logs = logs
             if filter_type != "All":
                 filtered_logs = [log for log in logs if log.get('level') == filter_type.upper()]
-                
+
             for log in filtered_logs:
                 self._format_and_append_log(log)
         except Exception as e:
@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
         timestamp = log.get('timestamp', '')
         level = log.get('level', 'INFO')
         message = log.get('message', '')
-        
+
         # Color coding based on log level
         color = {
             'ERROR': '#F56565',
@@ -514,7 +514,7 @@ class MainWindow(QMainWindow):
             'SUCCESS': '#38A169',
             'INFO': self.app.settings.get_theme_colors()['text']
         }.get(level, self.app.settings.get_theme_colors()['text'])
-        
+
         formatted_log = (
             f'<span style="color: {color}">'
             f'[{timestamp}] {level}: {message}'
