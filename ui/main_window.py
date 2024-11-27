@@ -458,8 +458,20 @@ class MainWindow(QMainWindow):
                 self.last_run_label.setText(
                     f"Last run: {last_run if last_run else 'Never'}"
                 )
-            except Exception as e:
-                QMessageBox.warning(
+            else:
+                QMessageBox.warning(self, "Schedule Update Error", message)
+                self.status_label.setText("Failed to update schedule")
+
+        except Exception as e:
+            next_run = self.app.scheduler.get_next_run()
+            last_run = self.app.scheduler.get_last_run()
+
+            self.next_run_label.setText(
+                f"Next scheduled run: {next_run if next_run else 'Not scheduled'}"
+            )
+            self.last_run_label.setText(
+                f"Last run: {last_run if last_run else 'Never'}"
+            )
                     self,
                     "Schedule Update Error",
                     f"Failed to update schedule: {str(e)}"
