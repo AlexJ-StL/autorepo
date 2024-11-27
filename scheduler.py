@@ -27,17 +27,53 @@ class Scheduler:
             return False, f"Failed to connect to Task Scheduler: {str(e)}"
 
     def update_schedule(self) -> tuple[bool, str]:
-        """Update the scheduled task with enhanced error handling and validation"""
-        if not self.scheduler:
-            return self._connect_scheduler()
+        """Update the scheduled task with retry logic"""
 
-        schedule_settings = self.settings.get_schedule_settings()
-        if not schedule_settings['enabled']:
-            success = self.delete_task()
-            return success, "Schedule disabled and task removed" if success else "Failed to remove task"
+        retries = 3
+        for attempt in range(retries):
+            try:
+                if not self.scheduler:
+                    self._connect_scheduler()
 
-        # Validate schedule settings
-        if not schedule_settings.get('days'):
+                schedule_settings = self.settings.get_schedule_settings()
+                if not schedule_settings['enabled']:
+                    success = self.delete_task()
+                    return success, "Schedule disabled and task removed" if success else "Failed to remove task"
+
+                # Validate schedule settings
+                if not schedule_settings.get('days'):
+                    return False, "No days selected for scheduling"
+
+                hour = int(schedule_settings.get('hour', 9))
+                minute = int(schedule_settings.get('minute', 0))
+                trigger_time = time(hour=hour, minute=minute)
+
+                days = schedule_settings.get('days', ['Mon', 'Wed', 'Fri'])
+                day_indices = [self._get_day_index(day) for day in days]
+
+                # Get notification offset
+                notification_time = schedule_settings.get('notification', '5 minutes')
+                notification_minutes = self._parse_notification_time(notification_time)
+
+                success = self._create_task_with_notification(
+                    self.task_name,
+                    sys.executable,
+                    trigger_time,
+                    day_indices,
+                    notification_minutes
+                )
+
+                message = "Schedule updated successfully" if success else "Failed to update schedule"
+                return True, message
+            except Exception as e:
+                logging.error(f"Schedule update attempt {attempt + 1} failed: {e}")
+                if attempt < retries - 1:
+                    logging.info("Retrying schedule update...")
+                    time.sleep(2)
+                else:
+                    error_msg = f"Failed to update schedule after {retries} attempts: {str(e)}"
+                    logging.error(error_msg)
+                    return False, error_msg
             return False, "No days selected for scheduling"
 
         try:

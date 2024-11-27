@@ -231,4 +231,9 @@ class Themes:
                 padding: 0 3px 0 3px;
                 color: {colors["text"]};
             }}
+
+            QLabel#schedule-status-enabled { color: #27AE60; }
+            QLabel#schedule-status-disabled { color: #E74C3C; }
+            QLabel#schedule-status-pending { color: #F39C12; }
+
         """

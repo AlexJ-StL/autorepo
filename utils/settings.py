@@ -59,11 +59,18 @@ class Settings:
         self.save_settings()
 
     def get_notification_time(self) -> int:
-        """Convert notification time setting to minutes"""
+        """Convert notification time setting to minutes, handling custom input"""
         notification_setting = self.settings.get("schedule_notification", "5 minutes")
         try:
-            return int(notification_setting.split()[0])
-        except (ValueError, IndexError):
+            if notification_setting.endswith("minutes"):
+                return int(notification_setting.split()[0])
+            elif notification_setting.endswith("hours"):
+                return int(notification_setting.split()[0]) * 60
+            elif notification_setting.isdigit():
+                return int(notification_setting)
+            else:
+                return 5
+        except ValueError:
             return 5
 
     def is_schedule_enabled(self) -> bool:

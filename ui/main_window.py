@@ -364,7 +364,8 @@ class MainWindow(QMainWindow):
         notif_layout = QHBoxLayout()
         notif_label = QLabel("Notification before update:")
         notif_combo = QComboBox()
-        notif_combo.addItems(["1 minute", "5 minutes", "15 minutes", "30 minutes"])
+        notif_combo.setEditable(True)
+        notif_combo.addItems(["1 minute", "5 minutes", "15 minutes", "30 minutes", "1 hour", "2 hours"])
         notif_combo.setCurrentText(
             self.app.settings.get("schedule_notification", "5 minutes")
         )
@@ -384,9 +385,11 @@ class MainWindow(QMainWindow):
         status_layout = QVBoxLayout(status_group)
 
         self.next_run_label = QLabel("Next scheduled run: Not scheduled")
+        self.next_run_label.setObjectName("schedule-status-label")
         status_layout.addWidget(self.next_run_label)
 
         self.last_run_label = QLabel("Last run: Never")
+        self.last_run_label.setObjectName("schedule-status-label")
         status_layout.addWidget(self.last_run_label)
 
         # Manual schedule update button
@@ -428,9 +431,24 @@ class MainWindow(QMainWindow):
 
     def _update_schedule(self):
         """Update the schedule based on current settings"""
-        if self.app.settings.get("schedule_enabled", False):
-            try:
-                self.app.scheduler.update_schedule()
+        try:
+            success, message = self.app.scheduler.update_schedule()
+            if success:
+                self.status_label.setText(message)
+                next_run = self.app.scheduler.get_next_run()
+                last_run = self.app.scheduler.get_last_run()
+
+                self.next_run_label.setText(
+                    f"Next scheduled run: {next_run if next_run else 'Not scheduled'}"
+                )
+                self.last_run_label.setText(
+                    f"Last run: {last_run if last_run else 'Never'}"
+                )
+            else:
+                QMessageBox.warning(self, "Schedule Update Error", message)
+                self.status_label.setText("Failed to update schedule")
+
+        except Exception as e:
                 next_run = self.app.scheduler.get_next_run()
                 last_run = self.app.scheduler.get_last_run()
 
