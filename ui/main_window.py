@@ -573,33 +573,31 @@ class MainWindow(QMainWindow):
                 "Last run: "
                 f"{last_run if last_run else 'Never'}"
             )
-            else:
-                QMessageBox.warning(
+        else:
+            QMessageBox.warning(
                 self,
                 "Schedule Update Error",
                 message
             )
-                self.status_label.setText(
-                "Failed to update schedule"
+            self.status_label.setText(f"Failed to update schedule: {message}")
+        except Exception as e:
+            QMessageBox.warning(
+                self,
+                "Schedule Update Error",
+                f"Failed to update schedule: {str(e)}"
             )
-            except Exception as e:
-                QMessageBox.warning(
-                    self,
-                    "Schedule Update Error",
-                    f"Failed to update schedule: {str(e)}"
-                )
-                self.status_label.setText("Failed to update schedule")
-                    next_run = self.app.scheduler.get_next_run()
-                    last_run = self.app.scheduler.get_last_run()
+            self.status_label.setText(f"Failed to update schedule: {str(e)}")
+            next_run = self.app.scheduler.get_next_run()
+            last_run = self.app.scheduler.get_last_run()
 
-                self.next_run_label.setText(
-                    "Next scheduled run: "
-                    f"{next_run if next_run else 'Not scheduled'}"
-                )
-                self.last_run_label.setText(
-                    "Last run: "
-                    f"{last_run if last_run else 'Never'}"
-                )
+            self.next_run_label.setText(
+                "Next scheduled run: "
+                f"{next_run if next_run else 'Not scheduled'}"
+            )
+            self.last_run_label.setText(
+                "Last run: "
+                f"{last_run if last_run else 'Never'}"
+            )
 
     def _refresh_logs(self):
         """Refresh the logs display"""
