@@ -82,10 +82,22 @@ class MainWindow(QMainWindow):
         self.tab_widget.setObjectName("main-tabs")
 
         # Add tabs
-        self.tab_widget.addTab(self._create_status_tab(), "Status")
-        self.tab_widget.addTab(self._create_settings_tab(), "Settings")
-        self.tab_widget.addTab(self._create_logs_tab(), "Logs")
-        self.tab_widget.addTab(self._create_scheduler_tab(), "Schedule")
+        self.tab_widget.addTab(
+            self._create_status_tab(),
+            "Status"
+        )
+        self.tab_widget.addTab(
+            self._create_settings_tab(),
+            "Settings"
+        )
+        self.tab_widget.addTab(
+            self._create_logs_tab(),
+            "Logs"
+        )
+        self.tab_widget.addTab(
+            self._create_scheduler_tab(),
+            "Schedule"
+        )
 
         main_layout.addWidget(self.tab_widget)
 
@@ -105,7 +117,9 @@ class MainWindow(QMainWindow):
 
     def select_directory(self):
         directory = QFileDialog.getExistingDirectory(
-            self, "Select Directory", self.app.settings.last_directory
+            self,
+            "Select Directory",
+            self.app.settings.last_directory
         )
         if directory:
             self.app.settings.last_directory = directory
@@ -113,16 +127,24 @@ class MainWindow(QMainWindow):
     def update_repositories(self):
         directory = self.app.settings.last_directory
         if not directory:
-            QMessageBox.warning(self, "Warning", "Please select a directory.")
+            QMessageBox.warning(
+                self,
+                "Warning",
+                "Please select a directory."
+            )
             return
 
         self.status_label.setText("Updating...")
-        self.update_thread = UpdateThread(directory, self.git_operations)
+        self.update_thread = UpdateThread(
+            directory, self.git_operations
+        )
         self.update_thread.finished.connect(self.update_finished)
         self.update_thread.update_signal.connect(self.update_status)
         self.update_thread.start()
 
-        self.status_label.setText(f"Logs saved to {self.app.logger.log_dir}")
+        self.status_label.setText(
+            f"Logs saved to {self.app.logger.log_dir}"
+        )
 
     def update_finished(self):
         self.status_label.setText("Update complete")
@@ -157,12 +179,23 @@ class MainWindow(QMainWindow):
 
         # Max depth setting
         depth_layout = QHBoxLayout()
-        depth_label = QLabel("Maximum Repository Depth:")
+        depth_label = QLabel(
+            "Maximum Repository Depth:"
+        )
         depth_combo = QComboBox()
-        depth_combo.addItems(["1", "2", "3", "4", "5"])
-        depth_combo.setCurrentText(str(self.app.settings.get("max_depth", "2")))
+        depth_combo.addItems(
+            ["1", "2", "3", "4", "5"]
+        )
+        depth_combo.setCurrentText(
+            str(self.app.settings.get(
+                "max_depth",
+                "2"
+            ))
+        )
         depth_combo.currentTextChanged.connect(
-            lambda x: self.app.settings.set("max_depth", int(x))
+            lambda x: self.app.settings.set(
+                "max_depth", int(x)
+            )
         )
         depth_layout.addWidget(depth_label)
         depth_layout.addWidget(depth_combo)
@@ -171,7 +204,12 @@ class MainWindow(QMainWindow):
 
         # Auto-save setting
         autosave = QCheckBox("Auto-save repository list")
-        autosave.setChecked(self.app.settings.get("auto_save", True))
+        autosave.setChecked(
+            self.app.settings.get(
+                "auto_save",
+                True
+            )
+        )
         autosave.toggled.connect(
             lambda x: self.app.settings.set("auto_save", x)
         )
@@ -185,17 +223,31 @@ class MainWindow(QMainWindow):
 
         # Enable notifications
         enable_notif = QCheckBox("Enable Notifications")
-        enable_notif.setChecked(self.app.settings.get("notifications_enabled", True))
+        enable_notif.setChecked(
+            self.app.settings.get(
+                "notifications_enabled",
+                True
+            )
+        )
         enable_notif.toggled.connect(
-            lambda x: self.app.settings.set("notifications_enabled", x)
+            lambda x: self.app.settings.set(
+                "notifications_enabled", x
+            )
         )
         notif_layout.addWidget(enable_notif)
 
         # Notification sound
         sound_check = QCheckBox("Play notification sound")
-        sound_check.setChecked(self.app.settings.get("notification_sound", True))
+        sound_check.setChecked(
+            self.app.settings.get(
+                "notification_sound",
+                True
+            )
+        )
         sound_check.toggled.connect(
-            lambda x: self.app.settings.set("notification_sound", x)
+            lambda x: self.app.settings.set(
+                "notification_sound", x
+            )
         )
         notif_layout.addWidget(sound_check)
 
@@ -210,9 +262,13 @@ class MainWindow(QMainWindow):
         format_label = QLabel("Log Format:")
         format_combo = QComboBox()
         format_combo.addItems(["JSON", "CSV"])
-        format_combo.setCurrentText(self.app.settings.get("log_format", "JSON"))
+        format_combo.setCurrentText(
+            self.app.settings.get("log_format", "JSON")
+        )
         format_combo.currentTextChanged.connect(
-            lambda x: self.app.settings.set("log_format", x)
+            lambda x: self.app.settings.set(
+                "log_format", x
+            )
         )
         format_layout.addWidget(format_label)
         format_layout.addWidget(format_combo)
@@ -224,9 +280,15 @@ class MainWindow(QMainWindow):
         retention_label = QLabel("Log Retention (days):")
         retention_combo = QComboBox()
         retention_combo.addItems(["7", "14", "30", "90"])
-        retention_combo.setCurrentText(str(self.app.settings.get("log_retention", "30")))
+        retention_combo.setCurrentText(
+            str(self.app.settings.get(
+                "log_retention", "30"
+            ))
+        )
         retention_combo.currentTextChanged.connect(
-            lambda x: self.app.settings.set("log_retention", int(x))
+            lambda x: self.app.settings.set(
+                "log_retention", int(x)
+            )
         )
         retention_layout.addWidget(retention_label)
         retention_layout.addWidget(retention_combo)
@@ -262,8 +324,16 @@ class MainWindow(QMainWindow):
 
         # Filter dropdown
         filter_combo = QComboBox()
-        filter_combo.addItems(["All", "Info", "Warning", "Error", "Success"])
-        filter_combo.currentTextChanged.connect(self._filter_logs)
+        filter_combo.addItems([
+            "All",
+            "Info",
+            "Warning",
+            "Error",
+            "Success"
+        ])
+        filter_combo.currentTextChanged.connect(
+            self._filter_logs
+        )
 
         controls_layout.addWidget(refresh_btn)
         controls_layout.addWidget(clear_btn)
@@ -312,9 +382,13 @@ class MainWindow(QMainWindow):
 
         # Enable scheduling checkbox
         enable_schedule = QCheckBox("Enable Scheduled Updates")
-        enable_schedule.setChecked(self.app.settings.get("schedule_enabled", False))
+        enable_schedule.setChecked(
+            self.app.settings.get("schedule_enabled", False)
+        )
         enable_schedule.toggled.connect(
-            lambda x: self.app.settings.set("schedule_enabled", x)
+            lambda x: self.app.settings.set(
+                "schedule_enabled", x
+            )
         )
         schedule_layout.addWidget(enable_schedule)
 
@@ -324,13 +398,19 @@ class MainWindow(QMainWindow):
         hour_combo = QComboBox()
         hour_combo.addItems([f"{i:02d}" for i in range(24)])
         hour_combo.setCurrentText(
-            str(self.app.settings.get("schedule_hour", "09")).zfill(2)
+            str(self.app.settings.get(
+                "schedule_hour", "09"
+            )).zfill(2)
         )
 
         minute_combo = QComboBox()
-        minute_combo.addItems([f"{i:02d}" for i in range(0, 60, 15)])
+        minute_combo.addItems(
+            [f"{i:02d}" for i in range(0, 60, 15)]
+        )
         minute_combo.setCurrentText(
-            str(self.app.settings.get("schedule_minute", "00")).zfill(2)
+            str(self.app.settings.get(
+                "schedule_minute", "00"
+            )).zfill(2)
         )
 
         time_layout.addWidget(time_label)
@@ -345,15 +425,27 @@ class MainWindow(QMainWindow):
         days_label = QLabel("Run on days:")
         days_layout.addWidget(days_label)
 
-        days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        days = [
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat',
+            'Sun'
+        ]
         self.day_checkboxes = {}
-        saved_days = self.app.settings.get("schedule_days", ["Mon", "Wed", "Fri"])
+        saved_days = self.app.settings.get(
+            "schedule_days",
+            ["Mon", "Wed", "Fri"]
+        )
 
         for day in days:
             checkbox = QCheckBox(day)
             checkbox.setChecked(day in saved_days)
             checkbox.toggled.connect(
-                lambda x, d=day: self._update_schedule_days(d, x)
+                lambda x,
+                d=day: self._update_schedule_days(d, x)
             )
             self.day_checkboxes[day] = checkbox
             days_layout.addWidget(checkbox)
@@ -365,12 +457,24 @@ class MainWindow(QMainWindow):
         notif_label = QLabel("Notification before update:")
         notif_combo = QComboBox()
         notif_combo.setEditable(True)
-        notif_combo.addItems(["1 minute", "5 minutes", "15 minutes", "30 minutes", "1 hour", "2 hours"])
+        notif_combo.addItems([
+            "1 minute",
+            "5 minutes",
+            "15 minutes",
+            "30 minutes",
+            "1 hour",
+            "2 hours"
+        ])
         notif_combo.setCurrentText(
-            self.app.settings.get("schedule_notification", "5 minutes")
+            self.app.settings.get(
+                "schedule_notification",
+                "5 minutes"
+            )
         )
         notif_combo.currentTextChanged.connect(
-            lambda x: self.app.settings.set("schedule_notification", x)
+            lambda x: self.app.settings.set(
+                "schedule_notification", x
+            )
         )
         notif_layout.addWidget(notif_label)
         notif_layout.addWidget(notif_combo)
@@ -384,19 +488,39 @@ class MainWindow(QMainWindow):
         status_group = QGroupBox("Schedule Status")
         status_layout = QVBoxLayout(status_group)
 
-        self.next_run_label = QLabel("Next scheduled run: Not scheduled")
-        self.next_run_label.setObjectName("schedule-status-label")
-        status_layout.addWidget(self.next_run_label)
+        self.next_run_label = QLabel(
+            "Next scheduled run: Not scheduled"
+        )
+        self.next_run_label.setObjectName(
+            "schedule-status-label"
+        )
+        status_layout.addWidget(
+            self.next_run_label
+        )
 
-        self.last_run_label = QLabel("Last run: Never")
-        self.last_run_label.setObjectName("schedule-status-label")
-        status_layout.addWidget(self.last_run_label)
+        self.last_run_label = QLabel(
+            "Last run: Never"
+        )
+        self.last_run_label.setObjectName(
+            "schedule-status-label"
+        )
+        status_layout.addWidget(
+            self.last_run_label
+        )
 
         # Manual schedule update button
-        update_schedule_btn = QPushButton("Update Schedule")
-        update_schedule_btn.setObjectName("primary-button")
-        update_schedule_btn.clicked.connect(self._update_schedule)
-        status_layout.addWidget(update_schedule_btn)
+        update_schedule_btn = QPushButton(
+            "Update Schedule"
+        )
+        update_schedule_btn.setObjectName(
+            "primary-button"
+        )
+        update_schedule_btn.clicked.connect(
+            self._update_schedule
+        )
+        status_layout.addWidget(
+            update_schedule_btn
+        )
 
         layout.addWidget(status_group)
 
@@ -405,10 +529,14 @@ class MainWindow(QMainWindow):
 
         # Connect time selection changes
         hour_combo.currentTextChanged.connect(
-            lambda x: self._update_schedule_time(x, minute_combo.currentText())
+            lambda x: self._update_schedule_time(
+                x, minute_combo.currentText()
+            )
         )
         minute_combo.currentTextChanged.connect(
-            lambda x: self._update_schedule_time(hour_combo.currentText(), x)
+            lambda x: self._update_schedule_time(
+                hour_combo.currentText(), x
+            )
         )
 
         return scheduler_widget
@@ -437,47 +565,41 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(message)
                 next_run = self.app.scheduler.get_next_run()
                 last_run = self.app.scheduler.get_last_run()
-
-                self.next_run_label.setText(
-                    f"Next scheduled run: {next_run if next_run else 'Not scheduled'}"
-                )
-                self.last_run_label.setText(
-                    f"Last run: {last_run if last_run else 'Never'}"
-                )
-            else:
-                QMessageBox.warning(self, "Schedule Update Error", message)
-                self.status_label.setText("Failed to update schedule")
-
-        except Exception as e:
-                next_run = self.app.scheduler.get_next_run()
-                last_run = self.app.scheduler.get_last_run()
-
-                self.next_run_label.setText(
-                    f"Next scheduled run: {next_run if next_run else 'Not scheduled'}"
-                )
-                self.last_run_label.setText(
-                    f"Last run: {last_run if last_run else 'Never'}"
-                )
-            else:
-                QMessageBox.warning(self, "Schedule Update Error", message)
-                self.status_label.setText("Failed to update schedule")
-
-        except Exception as e:
-            next_run = self.app.scheduler.get_next_run()
-            last_run = self.app.scheduler.get_last_run()
-
             self.next_run_label.setText(
-                f"Next scheduled run: {next_run if next_run else 'Not scheduled'}"
+                "Next scheduled run: "
+                f"{next_run if next_run else 'Not scheduled'}"
             )
             self.last_run_label.setText(
-                f"Last run: {last_run if last_run else 'Never'}"
+                "Last run: "
+                f"{last_run if last_run else 'Never'}"
             )
+            else:
+                QMessageBox.warning(
+                self,
+                "Schedule Update Error",
+                message
+            )
+                self.status_label.setText(
+                "Failed to update schedule"
+            )
+            except Exception as e:
+                QMessageBox.warning(
                     self,
                     "Schedule Update Error",
                     f"Failed to update schedule: {str(e)}"
                 )
-        else:
-            self.next_run_label.setText("Next scheduled run: Not scheduled")
+                self.status_label.setText("Failed to update schedule")
+                    next_run = self.app.scheduler.get_next_run()
+                    last_run = self.app.scheduler.get_last_run()
+
+                self.next_run_label.setText(
+                    "Next scheduled run: "
+                    f"{next_run if next_run else 'Not scheduled'}"
+                )
+                self.last_run_label.setText(
+                    "Last run: "
+                    f"{last_run if last_run else 'Never'}"
+                )
 
     def _refresh_logs(self):
         """Refresh the logs display"""
@@ -486,15 +608,25 @@ class MainWindow(QMainWindow):
             self.logs_text.clear()
 
             total_logs = len(logs)
-            error_count = sum(1 for log in logs if log.get('level') == 'ERROR')
-            warning_count = sum(1 for log in logs if log.get('level') == 'WARNING')
+            error_count = sum(
+                1 for log in logs if log.get('level') == 'ERROR'
+            )
+            warning_count = sum(
+                1 for log in logs if log.get('level') == 'WARNING'
+            )
 
             for log in logs:
                 self._format_and_append_log(log)
 
-            self.total_logs_label.setText(f"Total Logs: {total_logs}")
-            self.error_count_label.setText(f"Errors: {error_count}")
-            self.warning_count_label.setText(f"Warnings: {warning_count}")
+            self.total_logs_label.setText(
+                f"Total Logs: {total_logs}"
+            )
+            self.error_count_label.setText(
+                f"Errors: {error_count}"
+            )
+            self.warning_count_label.setText(
+                f"Warnings: {warning_count}"
+            )
         except Exception as e:
             self.logs_text.setText(f"Error loading logs: {str(e)}")
 
@@ -514,7 +646,11 @@ class MainWindow(QMainWindow):
                 self.logs_text.clear()
                 self._refresh_logs()
             except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to clear logs: {str(e)}")
+                QMessageBox.warning(
+                    self,
+                    "Error",
+                    f"Failed to clear logs: {str(e)}"
+                )
 
     def _filter_logs(self, filter_type):
         """Filter logs based on selected type"""
@@ -524,7 +660,9 @@ class MainWindow(QMainWindow):
 
             filtered_logs = logs
             if filter_type != "All":
-                filtered_logs = [log for log in logs if log.get('level') == filter_type.upper()]
+                filtered_logs = [
+                    log for log in logs if log.get('level') == filter_type.upper()
+                ]
 
             for log in filtered_logs:
                 self._format_and_append_log(log)
@@ -553,9 +691,9 @@ class MainWindow(QMainWindow):
         self.logs_text.insertHtml(formatted_log)
 
 
-class UpdateThread(QThread):
-    finished = pyqtSignal()
-    update_signal = pyqtSignal(str)
+    class UpdateThread(QThread):
+        finished = pyqtSignal()
+        update_signal = pyqtSignal(str)
 
     def __init__(self, directory, git_operations):
         super().__init__()
@@ -567,4 +705,4 @@ class UpdateThread(QThread):
         for repo in repos:
             self.update_signal.emit(f"Updating {repo}...")
             self.git_operations.pull_repository(repo)
-        self.finished.emit()
+            self.finished.emit()
