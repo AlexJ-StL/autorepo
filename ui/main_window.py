@@ -13,24 +13,22 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QMessageBox,
     QHBoxLayout,
-    QSpacerItem,
-    QSizePolicy,
     QTabWidget,
     QFrame,
     QGroupBox, QComboBox, QCheckBox, QTextEdit
 )
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from AutomaticRepoUpdater.git_operations import GitOperations
-import json
-from .themes import Themes
 
 
 class MainWindow(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
-        self.git_operations = GitOperations(self.app.settings,
-                                            self.app.logger)
+        self.git_operations = GitOperations(
+            self.app.settings,
+            self.app.logger
+        )
         self.init_ui()
 
     def init_ui(self):
@@ -565,28 +563,25 @@ class MainWindow(QMainWindow):
                 self.status_label.setText(message)
                 next_run = self.app.scheduler.get_next_run()
                 last_run = self.app.scheduler.get_last_run()
-            self.next_run_label.setText(
-                "Next scheduled run: "
-                f"{next_run if next_run else 'Not scheduled'}"
-            )
-            self.last_run_label.setText(
-                "Last run: "
-                f"{last_run if last_run else 'Never'}"
-            )
-        else:
-            QMessageBox.warning(
-                self,
-                "Schedule Update Error",
-                message
-            )
-            self.status_label.setText(f"Failed to update schedule: {message}")
+
+                self.next_run_label.setText(
+                    "Next scheduled run"
+                    f"{next_run if next_run else 'Not scheduled'}"
+                )
+                self.last_run_label.setText(
+                    f"Last run: {last_run if last_run else 'Never'}"
+                )
+            else:
+                QMessageBox.warning(self, "Schedule Update Error", message)
+                self.status_label.setText("Failed to update schedule")
+
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "Schedule Update Error",
                 f"Failed to update schedule: {str(e)}"
             )
-            self.status_label.setText(f"Failed to update schedule: {str(e)}")
+            self.status_label.setText("Failed to update schedule")
             next_run = self.app.scheduler.get_next_run()
             last_run = self.app.scheduler.get_last_run()
 
@@ -659,7 +654,8 @@ class MainWindow(QMainWindow):
             filtered_logs = logs
             if filter_type != "All":
                 filtered_logs = [
-                    log for log in logs if log.get('level') == filter_type.upper()
+                    log for log in logs if log.get('level') ==
+                    filter_type.upper()
                 ]
 
             for log in filtered_logs:
@@ -689,9 +685,9 @@ class MainWindow(QMainWindow):
         self.logs_text.insertHtml(formatted_log)
 
 
-    class UpdateThread(QThread):
-        finished = pyqtSignal()
-        update_signal = pyqtSignal(str)
+class UpdateThread(QThread):
+    finished = pyqtSignal()
+    update_signal = pyqtSignal(str)
 
     def __init__(self, directory, git_operations):
         super().__init__()
