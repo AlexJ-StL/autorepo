@@ -20,7 +20,6 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from AutomaticRepoUpdater.git_operations import GitOperations
 
-
 class MainWindow(QMainWindow):
     def __init__(self, app):
         super().__init__()
@@ -608,8 +607,39 @@ class MainWindow(QMainWindow):
                 1 for log in logs if log.get('level') == 'WARNING'
             )
 
+            self.total_logs_label.setText(
+                f"Total Logs: {total_logs}"
+            )
+            self.error_count_label.setText(
+                f"Errors: {error_count}"
+            )
+            self.warning_count_label.setText(
+                f"Warnings: {warning_count}"
+            )
+
             for log in logs:
-                self._format_and_append_log(log)
+                log_message = (
+                    f"[{log.get('timestamp')}] "
+                    f"[{log.get('level')}] "
+                    f"{log.get('message')}\n"
+                )
+                self.logs_text.append(log_message)
+
+        except Exception as e:
+            self.logs_text.append(f"Error refreshing logs: {e}")
+
+    def _filter_logs(self, filter_level):
+        """Filter logs based on the selected level"""
+        self.logs_text.clear()
+        try:
+            logs = self.app.logger.get_recent_logs()
+            total_logs = len(logs)
+            error_count = sum(
+                1 for log in logs if log.get('level') == 'ERROR'
+            )
+            warning_count = sum(
+                1 for log in logs if log.get('level') == 'WARNING'
+            )
 
             self.total_logs_label.setText(
                 f"Total Logs: {total_logs}"
@@ -620,70 +650,252 @@ class MainWindow(QMainWindow):
             self.warning_count_label.setText(
                 f"Warnings: {warning_count}"
             )
+
+            for log in logs:
+                if (
+                    filter_level == "All"
+                    or log.get('level') == filter_level.upper()
+                ):
+                    log_message = (
+                        f"[{log.get('timestamp')}] "
+                        f"[{log.get('level')}] "
+                        f"{log.get('message')}\n"
+                    )
+                    self.logs_text.append(log_message)
+
         except Exception as e:
-            self.logs_text.setText(f"Error loading logs: {str(e)}")
+            self.logs_text.append(f"Error filtering logs: {e}")
+
+    def _apply_theme(self):
+        """Apply the current theme to the application"""
+        theme = self.app.settings.get("theme", "light")
+        if theme == "light":
+            self.setStyleSheet(
+                """
+                /* Light Theme Styles */
+                QMainWindow {
+                    background-color: #f0f0f0;
+                }
+                QLabel {
+                    color: #333;
+                }
+                QPushButton {
+                    background-color: #fff;
+                    color: #333;
+                    border: 1px solid #ccc;
+                    padding: 5px 15px;
+                    border-radius: 5px;
+                }
+                QPushButton#primary-button {
+                    background-color: #007bff;
+                    color: white;
+                }
+                QTextEdit {
+                    background-color: #fff;
+                    color: #333;
+                    border: 1px solid #ccc;
+                }
+                QTabWidget::pane {
+                    border: 1px solid #ccc;
+                    background-color: #fff;
+                }
+                QTabWidget::tab-bar::tab {
+                    background-color: #eee;
+                    color: #333;
+                    padding: 5px 15px;
+                    border-top-left-radius: 3px;
+                    border-top-right-radius: 3px;
+                    border: 1px solid #ccc;
+                    border-bottom: none;
+                }
+                QTabWidget::tab-bar::tab:selected {
+                    background-color: #fff;
+                    border-bottom: 1px solid #fff;
+                }
+                QGroupBox {
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                    margin-top: 10px;
+                }
+                QGroupBox::title {
+                    subcontrol-origin: margin;
+                    subcontrol-position: top left;
+                    padding: 0 5px;
+                    background-color: #f0f0f0;
+                }
+                QComboBox {
+                    background-color: #fff;
+                    color: #333;
+                    border: 1px solid #ccc;
+                    padding: 5px;
+                    border-radius: 3px;
+                }
+                QCheckBox {
+                    color: #333;
+                }
+                #app-title {
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: #333;
+                }
+                #theme-switch {
+                    background-color: #ffca28;
+                    color: #333;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 8px 15px;
+                    font-weight: bold;
+                }
+                #action-card {
+                    background-color: #fff;
+                    border-radius: 8px;
+                    padding: 15px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                }
+                #status-bar {
+                    background-color: #e0e0e0;
+                    border-top: 1px solid #ccc;
+                    padding: 5px;
+                }
+                #status-text {
+                    color: #333;
+                    font-style: italic;
+                }
+                #log-display {
+                    background-color: #f8f8f8;
+                    border: 1px solid #ddd;
+                    font-family: 'Courier New', monospace;
+                    font-size: 10pt;
+                }
+                #schedule-status-label {
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                """
+            )
+            theme_switch_text = "Dark Mode"
+        else:
+            self.setStyleSheet(
+                """
+                /* Dark Theme Styles */
+                QMainWindow {
+                    background-color: #333;
+                }
+                QLabel {
+                    color: #eee;
+                }
+                QPushButton {
+                    background-color: #444;
+                    color: #eee;
+                    border: 1px solid #555;
+                    padding: 5px 15px;
+                    border-radius: 5px;
+                }
+                QPushButton#primary-button {
+                    background-color: #00aaff;
+                    color: #333;
+                }
+                QTextEdit {
+                    background-color: #555;
+                    color: #eee;
+                    border: 1px solid #666;
+                }
+                QTabWidget::pane {
+                    border: 1px solid #666;
+                    background-color: #444;
+                }
+                QTabWidget::tab-bar::tab {
+                    background-color: #555;
+                    color: #eee;
+                    padding: 5px 15px;
+                    border-top-left-radius: 3px;
+                    border-top-right-radius: 3px;
+                    border: 1px solid #666;
+                    border-bottom: none;
+                }
+                QTabWidget::tab-bar::tab:selected {
+                    background-color: #444;
+                    border-bottom: 1px solid #444;
+                }
+                QGroupBox {
+                    border: 1px solid #666;
+                    border-radius: 5px;
+                    margin-top: 10px;
+                }
+                QGroupBox::title {
+                    subcontrol-origin: margin;
+                    subcontrol-position: top left;
+                    padding: 0 5px;
+                    background-color: #333;
+                    color: #eee;
+                }
+                QComboBox {
+                    background-color: #444;
+                    color: #eee;
+                    border: 1px solid #666;
+                    padding: 5px;
+                    border-radius: 3px;
+                }
+                QCheckBox {
+                    color: #eee;
+                }
+                #app-title {
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: #eee;
+                }
+                #theme-switch {
+                    background-color: #ffca28;
+                    color: #333;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 8px 15px;
+                    font-weight: bold;
+                }
+                #action-card {
+                    background-color: #444;
+                    border-radius: 8px;
+                    padding: 15px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                }
+                #status-bar {
+                    background-color: #555;
+                    border-top: 1px solid #666;
+                    padding: 5px;
+                }
+                #status-text {
+                    color: #eee;
+                    font-style: italic;
+                }
+                #log-display {
+                    background-color: #2b2b2b;
+                    border: 1px solid #4d4d4d;
+                    color: #f0f0f0;
+                    font-family: 'Courier New', monospace;
+                    font-size: 10pt;
+                }
+                #schedule-status-label {
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                    color: #eee;
+                }
+                """
+            )
+            theme_switch_text = "Light Mode"
+        self.findChild(QPushButton, "theme-switch").setText(
+            theme_switch_text
+        )
+
+    def _toggle_theme(self):
+        """Toggle the application theme between light and dark."""
+        current_theme = self.app.settings.get("theme", "light")
+        new_theme = "dark" if current_theme == "light" else "light"
+        self.app.settings.set("theme", new_theme)
+        self._apply_theme()
 
     def _clear_logs(self):
-        """Clear the logs display and optionally the log file"""
-        reply = QMessageBox.question(
-            self,
-            'Clear Logs',
-            'Do you want to clear all logs? This cannot be undone.',
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
-        )
-
-        if reply == QMessageBox.StandardButton.Yes:
-            try:
-                self.app.logger.clear_logs()
-                self.logs_text.clear()
-                self._refresh_logs()
-            except Exception as e:
-                QMessageBox.warning(
-                    self,
-                    "Error",
-                    f"Failed to clear logs: {str(e)}"
-                )
-
-    def _filter_logs(self, filter_type):
-        """Filter logs based on selected type"""
-        try:
-            logs = self.app.logger.get_recent_logs()
-            self.logs_text.clear()
-
-            filtered_logs = logs
-            if filter_type != "All":
-                filtered_logs = [
-                    log for log in logs if log.get('level') ==
-                    filter_type.upper()
-                ]
-
-            for log in filtered_logs:
-                self._format_and_append_log(log)
-        except Exception as e:
-            self.logs_text.setText(f"Error filtering logs: {str(e)}")
-
-    def _format_and_append_log(self, log):
-        """Format and append a single log entry to the display"""
-        timestamp = log.get('timestamp', '')
-        level = log.get('level', 'INFO')
-        message = log.get('message', '')
-
-        # Color coding based on log level
-        color = {
-            'ERROR': '#F56565',
-            'WARNING': '#D69E2E',
-            'SUCCESS': '#38A169',
-            'INFO': self.app.settings.get_theme_colors()['text']
-        }.get(level, self.app.settings.get_theme_colors()['text'])
-
-        formatted_log = (
-            f'<span style="color: {color}">'
-            f'[{timestamp}] {level}: {message}'
-            f'</span><br>'
-        )
-        self.logs_text.insertHtml(formatted_log)
-
+        """Clear the logs display."""
+        self.logs_text.clear()
 
 class UpdateThread(QThread):
     finished = pyqtSignal()
@@ -695,8 +907,11 @@ class UpdateThread(QThread):
         self.git_operations = git_operations
 
     def run(self):
-        repos = self.git_operations.scan_directories(self.directory)
-        for repo in repos:
-            self.update_signal.emit(f"Updating {repo}...")
-            self.git_operations.pull_repository(repo)
+        try:
+            self.git_operations.update_all_repositories(
+                self.directory, update_signal=self.update_signal
+            )
+        except Exception as e:
+            self.update_signal.emit(f"Error during update: {e}")
+        finally:
             self.finished.emit()

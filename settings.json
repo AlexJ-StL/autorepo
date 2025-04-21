@@ -1,0 +1,19 @@
+{
+    "schedule_enabled": false,
+    "schedule_days": [
+        "Mon",
+        "Wed",
+        "Fri"
+    ],
+    "schedule_hour": 9,
+    "schedule_minute": 0,
+    "schedule_notification": "5 minutes",
+    "notifications_enabled": true,
+    "notification_sound": true,
+    "theme": "dark",
+    "max_depth": 2,
+    "auto_save": true,
+    "last_directory": "",
+    "log_format": "JSON",
+    "log_retention": 30
+}

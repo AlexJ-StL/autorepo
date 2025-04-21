@@ -1,0 +1,58 @@
+autorepo/
+├── __pycache__/
+│   └── scheduler.cpython-313.pyc
+├── AutomaticRepoUpdater/
+│   ├── __init__.py
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── __init__.cpython-313.pyc
+│   │   ├── git_operations.cpython-311.pyc
+│   │   └── git_operations.cpython-313.pyc
+│   ├── git_operations.py
+│   └── src/
+│       └── AutomaticRepoUpdater.md
+├── autorepo-cline_task_dec-20-2024_9-21-34-am.md
+├── LICENSE
+├── main.py
+├── poetry.lock
+├── pyproject.toml
+├── README.md
+├── scheduler.py
+├── settings.json
+├── tests/
+│   ├── __init__.py
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── __init__.cpython-313.pyc
+│   │   ├── test_main_window.cpython-311-pytest-8.3.3.pyc
+│   │   ├── test_main_window.cpython-311-pytest-8.3.4.pyc
+│   │   └── test_main_window.cpython-313-pytest-8.3.4.pyc
+│   ├── src/
+│   │   └── tests.md
+│   └── test_main_window.py
+├── ui/
+│   ├── __init__.py
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── __init__.cpython-313.pyc
+│   │   ├── main_window.cpython-311.pyc
+│   │   ├── main_window.cpython-313.pyc
+│   │   └── themes.cpython-311.pyc
+│   ├── main_window.py
+│   ├── src/
+│   │   └── ui.md
+│   ├── themes.py
+│   └── ui.py
+└── utils/
+    ├── __init__.py
+    ├── __pycache__/
+    │   ├── __init__.cpython-311.pyc
+    │   ├── __init__.cpython-313.pyc
+    │   ├── logger.cpython-311.pyc
+    │   ├── logger.cpython-313.pyc
+    │   ├── settings.cpython-311.pyc
+    │   └── settings.cpython-313.pyc
+    ├── logger.py
+    ├── settings.py
+    └── src/
+        └── utils.md
