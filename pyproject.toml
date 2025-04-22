@@ -1,7 +1,7 @@
 [project]
 name = "autorepo"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "Automated Git repository updater with scheduling"
 readme = "README.md"
 requires-python = ">=3.13.0"
 dependencies = [
@@ -10,3 +10,7 @@ dependencies = [
     "pytest>=8.3.5",
     "pywin32==310",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
