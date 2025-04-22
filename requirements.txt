@@ -1,0 +1,3 @@
+GitPython
+PyQt6
+pytest

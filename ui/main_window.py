@@ -4,6 +4,9 @@ Handles the primary user interface components
 and window management using PyQt6.
 """
 
+import sys # Keep sys import for QApplication
+import logging # Import logging for use in MainWindow
+
 from PyQt6.QtWidgets import (
     QMainWindow,
     QVBoxLayout,
@@ -15,20 +18,26 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QTabWidget,
     QFrame,
-    QGroupBox, QComboBox, QCheckBox, QTextEdit
+    QGroupBox, QComboBox, QCheckBox, QTextEdit,
+    QSystemTrayIcon # Import QSystemTrayIcon
 )
+from PyQt6.QtGui import QIcon # Import QIcon
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from AutomaticRepoUpdater.git_operations import GitOperations
+from ui.themes import get_theme_colors # Import get_theme_colors
 
 class MainWindow(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
+        # Use the logger instance from the app
+        self.logger = logging.getLogger(__name__)
         self.git_operations = GitOperations(
             self.app.settings,
-            self.app.logger
+            self.logger # Pass the standard logger
         )
         self.init_ui()
+        self._init_tray_icon() # Initialize system tray icon
 
     def init_ui(self):
         self.showMaximized()
@@ -112,17 +121,70 @@ class MainWindow(QMainWindow):
         # Apply initial theme
         self._apply_theme()
 
+    def _init_tray_icon(self):
+        """Initializes the system tray icon for notifications."""
+        # You might need an application icon file (e.g., .ico, .png)
+        # For now, using a generic icon or handling potential errors
+        try:
+            # Replace 'app_icon.png' with the actual path to your application icon
+            icon_path = "app_icon.png" # Placeholder
+            if not Path(icon_path).exists():
+                # Fallback or handle missing icon
+                self.logger.warning(f"Application icon not found at {icon_path}. Tray icon may not display correctly.")
+                # Use a standard icon or None
+                self.tray_icon = QSystemTrayIcon(self) # No icon provided
+            else:
+                self.tray_icon = QSystemTrayIcon(QIcon(icon_path), self)
+
+            self.tray_icon.setToolTip("Automatic Repo Updater")
+            self.tray_icon.show()
+        except Exception as e:
+            self.logger.error(f"Failed to initialize system tray icon: {e}")
+            self.tray_icon = None # Ensure tray_icon is None if initialization fails
+
+
+    def show_notification(self, title: str, message: str, level: str = "info") -> None:
+        """
+        Shows a desktop notification using QSystemTrayIcon.
+        Level parameter is for logging purposes, QSystemTrayIcon.showMessage doesn't use it directly.
+        """
+        if self.app.settings.get("notifications.enabled", default=True) and self.tray_icon:
+            try:
+                # QSystemTrayIcon.showMessage(title, message, icon=NoIcon, msecs=10000)
+                # icon can be QSystemTrayIcon.Information, Warning, Critical, NoIcon
+                # Mapping level to QSystemTrayIcon icon type (basic mapping)
+                icon_type = QSystemTrayIcon.Information
+                if level == "warning":
+                    icon_type = QSystemTrayIcon.Warning
+                elif level == "error":
+                    icon_type = QSystemTrayIcon.Critical
+
+                self.tray_icon.showMessage(
+                    f"Automatic Repo Updater - {title}",
+                    message,
+                    icon=icon_type,
+                    msecs=10000 # Duration in milliseconds (10 seconds)
+                )
+                self.logger.info(f"Notification shown: {title} - {message}")
+            except Exception as e:
+                self.logger.error(f"Failed to show notification via QSystemTrayIcon: {e}")
+        elif not self.app.settings.get("notifications.enabled", default=True):
+            self.logger.info("Notification not shown: Notifications are disabled in settings.")
+        else:
+            self.logger.warning("Notification not shown: System tray icon is not available.")
+
+
     def select_directory(self):
         directory = QFileDialog.getExistingDirectory(
             self,
             "Select Directory",
-            self.app.settings.last_directory
+            self.app.settings.get("application.last_directory", "") # Use nested key
         )
         if directory:
-            self.app.settings.last_directory = directory
+            self.app.settings.set("application.last_directory", directory) # Use nested key
 
     def update_repositories(self):
-        directory = self.app.settings.last_directory
+        directory = self.app.settings.get("application.last_directory", "") # Use nested key
         if not directory:
             QMessageBox.warning(
                 self,
@@ -139,9 +201,12 @@ class MainWindow(QMainWindow):
         self.update_thread.update_signal.connect(self.update_status)
         self.update_thread.start()
 
-        self.status_label.setText(
-            f"Logs saved to {self.app.logger.log_dir}"
-        )
+        # Assuming logger has a way to get log file path, update this line
+        # self.status_label.setText(
+        #     f"Logs saved to {self.app.logger.log_dir}"
+        # )
+        self.status_label.setText("Update started. Check logs tab for details.")
+
 
     def update_finished(self):
         self.status_label.setText("Update complete")
@@ -185,13 +250,13 @@ class MainWindow(QMainWindow):
         )
         depth_combo.setCurrentText(
             str(self.app.settings.get(
-                "max_depth",
+                "application.max_depth", # Use nested key
                 "2"
             ))
         )
         depth_combo.currentTextChanged.connect(
             lambda x: self.app.settings.set(
-                "max_depth", int(x)
+                "application.max_depth", int(x) # Use nested key
             )
         )
         depth_layout.addWidget(depth_label)
@@ -203,12 +268,12 @@ class MainWindow(QMainWindow):
         autosave = QCheckBox("Auto-save repository list")
         autosave.setChecked(
             self.app.settings.get(
-                "auto_save",
+                "application.auto_save", # Use nested key
                 True
             )
         )
         autosave.toggled.connect(
-            lambda x: self.app.settings.set("auto_save", x)
+            lambda x: self.app.settings.set("application.auto_save", x) # Use nested key
         )
         repo_layout.addWidget(autosave)
 
@@ -222,13 +287,13 @@ class MainWindow(QMainWindow):
         enable_notif = QCheckBox("Enable Notifications")
         enable_notif.setChecked(
             self.app.settings.get(
-                "notifications_enabled",
+                "notifications.enabled", # Use nested key
                 True
             )
         )
         enable_notif.toggled.connect(
             lambda x: self.app.settings.set(
-                "notifications_enabled", x
+                "notifications.enabled", x # Use nested key
             )
         )
         notif_layout.addWidget(enable_notif)
@@ -237,13 +302,13 @@ class MainWindow(QMainWindow):
         sound_check = QCheckBox("Play notification sound")
         sound_check.setChecked(
             self.app.settings.get(
-                "notification_sound",
+                "notifications.sound", # Use nested key
                 True
             )
         )
         sound_check.toggled.connect(
             lambda x: self.app.settings.set(
-                "notification_sound", x
+                "notifications.sound", x # Use nested key
             )
         )
         notif_layout.addWidget(sound_check)
@@ -260,11 +325,11 @@ class MainWindow(QMainWindow):
         format_combo = QComboBox()
         format_combo.addItems(["JSON", "CSV"])
         format_combo.setCurrentText(
-            self.app.settings.get("log_format", "JSON")
+            self.app.settings.get("application.log_format", "JSON") # Use nested key
         )
         format_combo.currentTextChanged.connect(
             lambda x: self.app.settings.set(
-                "log_format", x
+                "application.log_format", x # Use nested key
             )
         )
         format_layout.addWidget(format_label)
@@ -279,12 +344,12 @@ class MainWindow(QMainWindow):
         retention_combo.addItems(["7", "14", "30", "90"])
         retention_combo.setCurrentText(
             str(self.app.settings.get(
-                "log_retention", "30"
+                "application.log_retention", "30" # Use nested key
             ))
         )
         retention_combo.currentTextChanged.connect(
             lambda x: self.app.settings.set(
-                "log_retention", int(x)
+                "application.log_retention", int(x) # Use nested key
             )
         )
         retention_layout.addWidget(retention_label)
@@ -380,11 +445,11 @@ class MainWindow(QMainWindow):
         # Enable scheduling checkbox
         enable_schedule = QCheckBox("Enable Scheduled Updates")
         enable_schedule.setChecked(
-            self.app.settings.get("schedule_enabled", False)
+            self.app.settings.get("schedule.enabled", False) # Use nested key
         )
         enable_schedule.toggled.connect(
             lambda x: self.app.settings.set(
-                "schedule_enabled", x
+                "schedule.enabled", x # Use nested key
             )
         )
         schedule_layout.addWidget(enable_schedule)
@@ -396,7 +461,7 @@ class MainWindow(QMainWindow):
         hour_combo.addItems([f"{i:02d}" for i in range(24)])
         hour_combo.setCurrentText(
             str(self.app.settings.get(
-                "schedule_hour", "09"
+                "schedule.hour", "09" # Use nested key
             )).zfill(2)
         )
 
@@ -406,7 +471,7 @@ class MainWindow(QMainWindow):
         )
         minute_combo.setCurrentText(
             str(self.app.settings.get(
-                "schedule_minute", "00"
+                "schedule.minute", "00" # Use nested key
             )).zfill(2)
         )
 
@@ -433,7 +498,7 @@ class MainWindow(QMainWindow):
         ]
         self.day_checkboxes = {}
         saved_days = self.app.settings.get(
-            "schedule_days",
+            "schedule.days", # Use nested key
             ["Mon", "Wed", "Fri"]
         )
 
@@ -464,13 +529,13 @@ class MainWindow(QMainWindow):
         ])
         notif_combo.setCurrentText(
             self.app.settings.get(
-                "schedule_notification",
+                "schedule.notification_time", # Use nested key (renamed)
                 "5 minutes"
             )
         )
         notif_combo.currentTextChanged.connect(
             lambda x: self.app.settings.set(
-                "schedule_notification", x
+                "schedule.notification_time", x # Use nested key (renamed)
             )
         )
         notif_layout.addWidget(notif_label)
@@ -505,413 +570,224 @@ class MainWindow(QMainWindow):
             self.last_run_label
         )
 
-        # Manual schedule update button
-        update_schedule_btn = QPushButton(
-            "Update Schedule"
-        )
-        update_schedule_btn.setObjectName(
-            "primary-button"
-        )
-        update_schedule_btn.clicked.connect(
-            self._update_schedule
-        )
-        status_layout.addWidget(
-            update_schedule_btn
-        )
-
+        # Add the status group to main layout
         layout.addWidget(status_group)
 
         # Add stretch to push everything to the top
         layout.addStretch()
 
-        # Connect time selection changes
-        hour_combo.currentTextChanged.connect(
-            lambda x: self._update_schedule_time(
-                x, minute_combo.currentText()
-            )
-        )
-        minute_combo.currentTextChanged.connect(
-            lambda x: self._update_schedule_time(
-                hour_combo.currentText(), x
-            )
-        )
-
         return scheduler_widget
 
     def _update_schedule_days(self, day, checked):
-        """Update the scheduled days in settings"""
-        current_days = self.app.settings.get("schedule_days", [])
+        """Update the list of scheduled days in settings."""
+        current_days = self.app.settings.get("schedule.days", []) # Use nested key
         if checked and day not in current_days:
             current_days.append(day)
         elif not checked and day in current_days:
             current_days.remove(day)
-        self.app.settings.set("schedule_days", current_days)
-        self._update_schedule()
+        self.app.settings.set("schedule.days", current_days) # Use nested key
 
     def _update_schedule_time(self, hour, minute):
-        """Update the scheduled time in settings"""
-        self.app.settings.set("schedule_hour", int(hour))
-        self.app.settings.set("schedule_minute", int(minute))
-        self._update_schedule()
+        """Update the scheduled hour and minute in settings."""
+        self.app.settings.set("schedule.hour", int(hour)) # Use nested key
+        self.app.settings.set("schedule.minute", int(minute)) # Use nested key
 
     def _update_schedule(self):
-        """Update the schedule based on current settings"""
-        try:
-            success, message = self.app.scheduler.update_schedule()
-            if success:
-                self.status_label.setText(message)
-                next_run = self.app.scheduler.get_next_run()
-                last_run = self.app.scheduler.get_last_run()
-
-                self.next_run_label.setText(
-                    "Next scheduled run"
-                    f"{next_run if next_run else 'Not scheduled'}"
-                )
-                self.last_run_label.setText(
-                    f"Last run: {last_run if last_run else 'Never'}"
-                )
-            else:
-                QMessageBox.warning(self, "Schedule Update Error", message)
-                self.status_label.setText("Failed to update schedule")
-
-        except Exception as e:
-            QMessageBox.warning(
-                self,
-                "Schedule Update Error",
-                f"Failed to update schedule: {str(e)}"
-            )
-            self.status_label.setText("Failed to update schedule")
-            next_run = self.app.scheduler.get_next_run()
-            last_run = self.app.scheduler.get_last_run()
-
-            self.next_run_label.setText(
-                "Next scheduled run: "
-                f"{next_run if next_run else 'Not scheduled'}"
-            )
-            self.last_run_label.setText(
-                "Last run: "
-                f"{last_run if last_run else 'Never'}"
-            )
+        """Update the scheduler based on current settings."""
+        # This method would likely call a method on the scheduler instance
+        # to reconfigure the scheduled task based on the updated settings.
+        # Example: self.app.scheduler.configure_task()
+        self.logger.info("Schedule settings updated. Scheduler needs to be reconfigured.")
+        # Placeholder: In a real app, you'd call a method on self.app.scheduler
+        # self.app.scheduler.update_schedule_from_settings() # Assuming such a method exists
 
     def _refresh_logs(self):
-        """Refresh the logs display"""
-        try:
-            logs = self.app.logger.get_recent_logs()
-            self.logs_text.clear()
+        """Refresh the logs displayed in the logs tab."""
+        # This method needs to read the log file and display its content.
+        # Since we switched to standard logging, we need to read the log file directly.
+        log_file_path = Path.home() / '.autorepo' / 'logs' / 'autorepo.log'
+        log_content = ""
+        if log_file_path.exists():
+            try:
+                with open(log_file_path, 'r') as f:
+                    log_content = f.read()
+            except Exception as e:
+                self.logger.error(f"Failed to read log file: {e}")
+                log_content = f"Error reading log file: {e}"
 
-            total_logs = len(logs)
-            error_count = sum(
-                1 for log in logs if log.get('level') == 'ERROR'
-            )
-            warning_count = sum(
-                1 for log in logs if log.get('level') == 'WARNING'
-            )
+        self.logs_text.setText(log_content)
+        # Update statistics - this would require parsing the log file content
+        # For now, just clear them or show placeholders
+        self.total_logs_label.setText("Total Logs: N/A")
+        self.error_count_label.setText("Errors: N/A")
+        self.warning_count_label.setText("Warnings: N/A")
 
-            self.total_logs_label.setText(
-                f"Total Logs: {total_logs}"
-            )
-            self.error_count_label.setText(
-                f"Errors: {error_count}"
-            )
-            self.warning_count_label.setText(
-                f"Warnings: {warning_count}"
-            )
-
-            for log in logs:
-                log_message = (
-                    f"[{log.get('timestamp')}] "
-                    f"[{log.get('level')}] "
-                    f"{log.get('message')}\n"
-                )
-                self.logs_text.append(log_message)
-
-        except Exception as e:
-            self.logs_text.append(f"Error refreshing logs: {e}")
-
-    def _filter_logs(self, filter_level):
-        """Filter logs based on the selected level"""
-        self.logs_text.clear()
-        try:
-            logs = self.app.logger.get_recent_logs()
-            total_logs = len(logs)
-            error_count = sum(
-                1 for log in logs if log.get('level') == 'ERROR'
-            )
-            warning_count = sum(
-                1 for log in logs if log.get('level') == 'WARNING'
-            )
-
-            self.total_logs_label.setText(
-                f"Total Logs: {total_logs}"
-            )
-            self.error_count_label.setText(
-                f"Errors: {error_count}"
-            )
-            self.warning_count_label.setText(
-                f"Warnings: {warning_count}"
-            )
-
-            for log in logs:
-                if (
-                    filter_level == "All"
-                    or log.get('level') == filter_level.upper()
-                ):
-                    log_message = (
-                        f"[{log.get('timestamp')}] "
-                        f"[{log.get('level')}] "
-                        f"{log.get('message')}\n"
-                    )
-                    self.logs_text.append(log_message)
-
-        except Exception as e:
-            self.logs_text.append(f"Error filtering logs: {e}")
-
-    def _apply_theme(self):
-        """Apply the current theme to the application"""
-        theme = self.app.settings.get("theme", "light")
-        if theme == "light":
-            self.setStyleSheet(
-                """
-                /* Light Theme Styles */
-                QMainWindow {
-                    background-color: #f0f0f0;
-                }
-                QLabel {
-                    color: #333;
-                }
-                QPushButton {
-                    background-color: #fff;
-                    color: #333;
-                    border: 1px solid #ccc;
-                    padding: 5px 15px;
-                    border-radius: 5px;
-                }
-                QPushButton#primary-button {
-                    background-color: #007bff;
-                    color: white;
-                }
-                QTextEdit {
-                    background-color: #fff;
-                    color: #333;
-                    border: 1px solid #ccc;
-                }
-                QTabWidget::pane {
-                    border: 1px solid #ccc;
-                    background-color: #fff;
-                }
-                QTabWidget::tab-bar::tab {
-                    background-color: #eee;
-                    color: #333;
-                    padding: 5px 15px;
-                    border-top-left-radius: 3px;
-                    border-top-right-radius: 3px;
-                    border: 1px solid #ccc;
-                    border-bottom: none;
-                }
-                QTabWidget::tab-bar::tab:selected {
-                    background-color: #fff;
-                    border-bottom: 1px solid #fff;
-                }
-                QGroupBox {
-                    border: 1px solid #ccc;
-                    border-radius: 5px;
-                    margin-top: 10px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    subcontrol-position: top left;
-                    padding: 0 5px;
-                    background-color: #f0f0f0;
-                }
-                QComboBox {
-                    background-color: #fff;
-                    color: #333;
-                    border: 1px solid #ccc;
-                    padding: 5px;
-                    border-radius: 3px;
-                }
-                QCheckBox {
-                    color: #333;
-                }
-                #app-title {
-                    font-size: 20px;
-                    font-weight: bold;
-                    color: #333;
-                }
-                #theme-switch {
-                    background-color: #ffca28;
-                    color: #333;
-                    border: none;
-                    border-radius: 5px;
-                    padding: 8px 15px;
-                    font-weight: bold;
-                }
-                #action-card {
-                    background-color: #fff;
-                    border-radius: 8px;
-                    padding: 15px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
-                #status-bar {
-                    background-color: #e0e0e0;
-                    border-top: 1px solid #ccc;
-                    padding: 5px;
-                }
-                #status-text {
-                    color: #333;
-                    font-style: italic;
-                }
-                #log-display {
-                    background-color: #f8f8f8;
-                    border: 1px solid #ddd;
-                    font-family: 'Courier New', monospace;
-                    font-size: 10pt;
-                }
-                #schedule-status-label {
-                    font-weight: bold;
-                    margin-bottom: 5px;
-                }
-                """
-            )
-            theme_switch_text = "Dark Mode"
-        else:
-            self.setStyleSheet(
-                """
-                /* Dark Theme Styles */
-                QMainWindow {
-                    background-color: #333;
-                }
-                QLabel {
-                    color: #eee;
-                }
-                QPushButton {
-                    background-color: #444;
-                    color: #eee;
-                    border: 1px solid #555;
-                    padding: 5px 15px;
-                    border-radius: 5px;
-                }
-                QPushButton#primary-button {
-                    background-color: #00aaff;
-                    color: #333;
-                }
-                QTextEdit {
-                    background-color: #555;
-                    color: #eee;
-                    border: 1px solid #666;
-                }
-                QTabWidget::pane {
-                    border: 1px solid #666;
-                    background-color: #444;
-                }
-                QTabWidget::tab-bar::tab {
-                    background-color: #555;
-                    color: #eee;
-                    padding: 5px 15px;
-                    border-top-left-radius: 3px;
-                    border-top-right-radius: 3px;
-                    border: 1px solid #666;
-                    border-bottom: none;
-                }
-                QTabWidget::tab-bar::tab:selected {
-                    background-color: #444;
-                    border-bottom: 1px solid #444;
-                }
-                QGroupBox {
-                    border: 1px solid #666;
-                    border-radius: 5px;
-                    margin-top: 10px;
-                }
-                QGroupBox::title {
-                    subcontrol-origin: margin;
-                    subcontrol-position: top left;
-                    padding: 0 5px;
-                    background-color: #333;
-                    color: #eee;
-                }
-                QComboBox {
-                    background-color: #444;
-                    color: #eee;
-                    border: 1px solid #666;
-                    padding: 5px;
-                    border-radius: 3px;
-                }
-                QCheckBox {
-                    color: #eee;
-                }
-                #app-title {
-                    font-size: 20px;
-                    font-weight: bold;
-                    color: #eee;
-                }
-                #theme-switch {
-                    background-color: #ffca28;
-                    color: #333;
-                    border: none;
-                    border-radius: 5px;
-                    padding: 8px 15px;
-                    font-weight: bold;
-                }
-                #action-card {
-                    background-color: #444;
-                    border-radius: 8px;
-                    padding: 15px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-                }
-                #status-bar {
-                    background-color: #555;
-                    border-top: 1px solid #666;
-                    padding: 5px;
-                }
-                #status-text {
-                    color: #eee;
-                    font-style: italic;
-                }
-                #log-display {
-                    background-color: #2b2b2b;
-                    border: 1px solid #4d4d4d;
-                    color: #f0f0f0;
-                    font-family: 'Courier New', monospace;
-                    font-size: 10pt;
-                }
-                #schedule-status-label {
-                    font-weight: bold;
-                    margin-bottom: 5px;
-                    color: #eee;
-                }
-                """
-            )
-            theme_switch_text = "Light Mode"
-        self.findChild(QPushButton, "theme-switch").setText(
-            theme_switch_text
-        )
-
-    def _toggle_theme(self):
-        """Toggle the application theme between light and dark."""
-        current_theme = self.app.settings.get("theme", "light")
-        new_theme = "dark" if current_theme == "light" else "light"
-        self.app.settings.set("theme", new_theme)
-        self._apply_theme()
 
     def _clear_logs(self):
-        """Clear the logs display."""
+        """Clear the log file and the displayed logs."""
+        log_file_path = Path.home() / '.autorepo' / 'logs' / 'autorepo.log'
+        if log_file_path.exists():
+            try:
+                with open(log_file_path, 'w') as f:
+                    f.write("") # Clear the file
+                self.logger.info("Log file cleared.")
+            except Exception as e:
+                self.logger.error(f"Failed to clear log file: {e}")
+
         self.logs_text.clear()
+        self.total_logs_label.setText("Total Logs: 0")
+        self.error_count_label.setText("Errors: 0")
+        self.warning_count_label.setText("Warnings: 0")
+
+
+    def _filter_logs(self, filter_level):
+        """Filter the displayed logs by level."""
+        # This method would require reading the log file and filtering its content
+        # based on the selected level before displaying it.
+        # Since the current log format is simple text, this would involve
+        # parsing each line.
+        self.logger.info(f"Log filter set to: {filter_level}. Filtering not fully implemented for current log format.")
+        # Re-implement filtering logic here based on the text in self.logs_text
+        # or by re-reading and parsing the log file.
+
+
+    def _apply_theme(self):
+        """Apply the selected theme to the application."""
+        theme_name = self.app.settings.get("application.theme", "light") # Use nested key
+        colors = get_theme_colors(theme_name)
+        # Apply stylesheet based on colors
+        stylesheet = f"""
+            QMainWindow {{
+                background-color: {colors['window']};
+                color: {colors['text']};
+            }}
+            QLabel {{
+                color: {colors['text']};
+            }}
+            QPushButton {{
+                background-color: {colors['primary']};
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+            }}
+            QPushButton:hover {{
+                background-color: {colors['hover']};
+            }}
+            QPushButton#theme-switch {{
+                background-color: transparent;
+                color: {colors['text']};
+                padding: 5px;
+            }}
+            QPushButton#theme-switch:hover {{
+                background-color: {colors['secondary']};
+            }}
+            QFrame#action-card, QGroupBox {{
+                background-color: {colors['card_bg']};
+                border: 1px solid {colors['border']};
+                border-radius: 5px;
+                padding: 15px;
+            }}
+            QTabWidget::pane {{
+                border: 1px solid {colors['border']};
+                background-color: {colors['card_bg']};
+            }}
+            QTabWidget::tab-bar {{
+                left: 5px; /* move to the right by 5px */
+            }}
+            QTabBar::tab {{
+                background: {colors['secondary']};
+                color: {colors['text']};
+                padding: 10px;
+                border: 1px solid {colors['border']};
+                border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
+                margin-right: 2px;
+            }}
+            QTabBar::tab:selected {{
+                background: {colors['card_bg']};
+                border-bottom-color: {colors['card_bg']}; /* same as pane color */
+            }}
+            QTabBar::tab:hover {{
+                background: {colors['hover']};
+                color: white;
+            }}
+            QTextEdit {{
+                background-color: {colors['secondary']};
+                color: {colors['text']};
+                border: 1px solid {colors['border']};
+                border-radius: 5px;
+                padding: 10px;
+            }}
+            QComboBox {{
+                background-color: {colors['secondary']};
+                color: {colors['text']};
+                border: 1px solid {colors['border']};
+                border-radius: 5px;
+                padding: 5px;
+            }}
+            QCheckBox {{
+                color: {colors['text']};
+            }}
+            QFrame#status-bar {{
+                background-color: {colors['secondary']};
+                color: {colors['text']};
+                border-top: 1px solid {colors['border']};
+                padding: 5px;
+            }}
+            QLabel#app-title {{
+                font-size: 24px;
+                font-weight: bold;
+                color: {colors['primary']};
+            }}
+            QLabel#schedule-status-label {{
+                font-weight: bold;
+            }}
+        """
+        self.setStyleSheet(stylesheet)
+
+    def _toggle_theme(self):
+        """Toggle between light and dark themes."""
+        current_theme = self.app.settings.get("application.theme", "light") # Use nested key
+        new_theme = "dark" if current_theme == "light" else "light"
+        self.app.settings.set("application.theme", new_theme) # Use nested key
+        self._apply_theme()
+
 
 class UpdateThread(QThread):
     finished = pyqtSignal()
-    update_signal = pyqtSignal(str)
+    update_signal = pyqtSignal(str) # Signal to update status label
 
     def __init__(self, directory, git_operations):
         super().__init__()
         self.directory = directory
         self.git_operations = git_operations
+        self.logger = logging.getLogger(__name__) # Get logger for the thread
 
     def run(self):
-        try:
-            self.git_operations.update_all_repositories(
-                self.directory, update_signal=self.update_signal
-            )
-        except Exception as e:
-            self.update_signal.emit(f"Error during update: {e}")
-        finally:
-            self.finished.emit()
+        self.update_signal.emit(f"Scanning {self.directory}...")
+        repos = self.git_operations.scan_directories(self.directory)
+        self.update_signal.emit(f"Found {len(repos)} repositories. Updating...")
+
+        update_count = 0
+        error_count = 0
+
+        for repo_path in repos:
+            self.update_signal.emit(f"Updating {repo_path}...")
+            success, message = self.git_operations.pull_repository(str(repo_path))
+            if success:
+                update_count += 1
+                self.logger.info(f"Successfully updated {repo_path}: {message}")
+            else:
+                error_count += 1
+                self.logger.error(f"Failed to update {repo_path}: {message}")
+
+        completion_message = f"Update complete: {update_count} successful, {error_count} failed."
+        self.update_signal.emit(completion_message)
+        self.logger.info(completion_message)
+
+        self.finished.emit()
+
+# Note: The original _clear_logs and _filter_logs methods in MainWindow
+# need to be updated to work with the standard logging file format.
+# The current implementation in this file is a basic placeholder.

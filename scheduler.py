@@ -1,5 +1,6 @@
 import win32com.client
-from datetime import datetime, time, timedelta
+from datetime import datetime, time as datetime_time, timedelta # Import the time class with alias
+import time # Import the time module for sleep
 import os
 import sys
 import logging
@@ -46,7 +47,7 @@ class Scheduler:
 
                 hour = int(schedule_settings.get('hour', 9))
                 minute = int(schedule_settings.get('minute', 0))
-                trigger_time = time(hour=hour, minute=minute)
+                trigger_time = datetime_time(hour=hour, minute=minute) # Use the alias
 
                 days = schedule_settings.get('days', ['Mon', 'Wed', 'Fri'])
                 day_indices = [self._get_day_index(day) for day in days]
@@ -69,43 +70,17 @@ class Scheduler:
                 logging.error(f"Schedule update attempt {attempt + 1} failed: {e}")
                 if attempt < retries - 1:
                     logging.info("Retrying schedule update...")
-                    time.sleep(2)
+                    time.sleep(2) # Use the imported time module
                 else:
                     error_msg = f"Failed to update schedule after {retries} attempts: {str(e)}"
                     logging.error(error_msg)
                     return False, error_msg
-            return False, "No days selected for scheduling"
+                    return False, error_msg
+        # If the loop finishes without returning (all retries failed)
+        return False, f"Failed to update schedule after {retries} attempts."
 
-        try:
-            hour = int(schedule_settings.get('hour', 9))
-            minute = int(schedule_settings.get('minute', 0))
-            trigger_time = time(hour=hour, minute=minute)
-            
-            days = schedule_settings.get('days', ['Mon', 'Wed', 'Fri'])
-            day_indices = [self._get_day_index(day) for day in days]
-            
-            # Get notification offset
-            notification_time = schedule_settings.get('notification', '5 minutes')
-            notification_minutes = self._parse_notification_time(notification_time)
-            
-            success = self._create_task_with_notification(
-                self.task_name,
-                sys.executable,
-                trigger_time,
-                day_indices,
-                notification_minutes
-            )
-            
-            message = "Schedule updated successfully" if success else "Failed to update schedule"
-            return success, message
-            
-        except Exception as e:
-            error_msg = f"Failed to update schedule: {str(e)}"
-            logging.error(error_msg)
-            return False, error_msg
-
-    def _create_task_with_notification(self, name: str, program_path: str, 
-                                     trigger_time: time, trigger_days: List[int],
+    def _create_task_with_notification(self, name: str, program_path: str,
+                                     trigger_time: datetime_time, trigger_days: List[int], # Corrected type hint
                                      notification_minutes: int) -> bool:
         """Create a scheduled task with notification support"""
         if not self.scheduler:
@@ -162,15 +137,19 @@ class Scheduler:
             main_action.Arguments = "--scheduled-run"
             
             # Register the task
-            self.root_folder.RegisterTaskDefinition(
-                name,
-                task_def,
-                6,  # TASK_CREATE_OR_UPDATE
-                None,  # No user needed for current user context
-                None,  # No password
-                0  # TASK_LOGON_NONE
-            )
-            return True
+            if self.root_folder: # Check if connection is valid
+                self.root_folder.RegisterTaskDefinition(
+                    name,
+                    task_def,
+                    6,  # TASK_CREATE_OR_UPDATE
+                    None,  # No user needed for current user context
+                    None,  # No password
+                    0  # TASK_LOGON_NONE
+                )
+                return True
+            else:
+                logging.error("Cannot register task: Not connected to Task Scheduler.")
+                return False
             
         except Exception as e:
             logging.error(f"Failed to create scheduled task: {e}")
@@ -203,9 +182,12 @@ class Scheduler:
             return None
 
         try:
-            task = self.root_folder.GetTask(self.task_name)
-            next_run = task.NextRunTime
-            return next_run.strftime("%Y-%m-%d %H:%M:%S")
+            if self.root_folder: # Check if connection is valid
+                task = self.root_folder.GetTask(self.task_name)
+                next_run = task.NextRunTime
+                return next_run.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                return None
         except Exception:
             return None
 
@@ -215,9 +197,12 @@ class Scheduler:
             return None
 
         try:
-            task = self.root_folder.GetTask(self.task_name)
-            last_run = task.LastRunTime
-            return last_run.strftime("%Y-%m-%d %H:%M:%S")
+            if self.root_folder: # Check if connection is valid
+                task = self.root_folder.GetTask(self.task_name)
+                last_run = task.LastRunTime
+                return last_run.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                return None
         except Exception:
             return None
 
@@ -227,8 +212,12 @@ class Scheduler:
             return False
 
         try:
-            self.root_folder.DeleteTask(self.task_name, 0)
-            return True
+            if self.root_folder: # Check if connection is valid
+                self.root_folder.DeleteTask(self.task_name, 0)
+                return True
+            else:
+                logging.error("Cannot delete task: Not connected to Task Scheduler.")
+                return False
         except Exception as e:
             logging.error(f"Failed to delete scheduled task: {e}")
             return False

@@ -1,154 +1,102 @@
 import json
 import os
+from typing import Any, Dict, List, Optional
 
 class Settings:
     def __init__(self):
-        self.settings = {
-            # Default schedule settings
-            "schedule_enabled": False,
-            "schedule_days": ["Mon", "Wed", "Fri"],
-            "schedule_hour": 9,
-            "schedule_minute": 0,
-            "schedule_notification": "5 minutes",
-            "notifications_enabled": True,
-            "notification_sound": True,
-            
-            # Default application settings
-            "theme": "light",
-            "max_depth": 2,
-            "auto_save": True,
-            "last_directory": "",
-            "log_format": "JSON",
-            "log_retention": 30
+        self._settings: Dict[str, Any] = {
+            "schedule": {
+                "enabled": False,
+                "days": ["Mon", "Wed", "Fri"],
+                "hour": 9,
+                "minute": 0,
+                "notification_time": "5 minutes", # Renamed for clarity
+            },
+            "notifications": {
+                "enabled": True,
+                "sound": True,
+            },
+            "application": {
+                "theme": "light",
+                "max_depth": 2,
+                "auto_save": True,
+                "last_directory": "",
+                "log_format": "JSON", # Note: This setting is now ignored by the standard logging setup
+                "log_retention": 30 # Note: This setting is now ignored by the standard logging setup
+            }
         }
+        self._settings_path = "settings.json"
         self.load_settings()
 
-    def get_schedule_settings(self):
-        """Return all schedule-related settings as a dict"""
-        return {
-            "enabled": self.settings.get("schedule_enabled", False),
-            "days": self.settings.get("schedule_days", ["Mon", "Wed", "Fri"]),
-            "hour": self.settings.get("schedule_hour", 9),
-            "minute": self.settings.get("schedule_minute", 0),
-            "notification": self.settings.get("schedule_notification", "5 minutes"),
-            "notifications_enabled": self.settings.get("notifications_enabled", True),
-            "notification_sound": self.settings.get("notification_sound", True)
-        }
+    def _get_nested_value(self, keys: List[str], data: Dict[str, Any], default: Any = None) -> Any:
+        """Helper to get a value from a nested dictionary using a list of keys."""
+        if not keys:
+            return data
 
-    def update_schedule_settings(self, schedule_settings: dict):
-        """Update schedule settings with validation"""
-        # Validate days
-        valid_days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        days = schedule_settings.get("days", [])
-        self.settings["schedule_days"] = [day for day in days if day in valid_days]
+        current_key = keys[0]
+        if current_key in data:
+            if len(keys) == 1:
+                return data[current_key]
+            elif isinstance(data[current_key], dict):
+                return self._get_nested_value(keys[1:], data[current_key], default)
+        return default
 
-        # Validate hour (0-23)
-        hour = schedule_settings.get("hour", 9)
-        self.settings["schedule_hour"] = max(0, min(23, int(hour)))
+    def _set_nested_value(self, keys: List[str], data: Dict[str, Any], value: Any) -> None:
+        """Helper to set a value in a nested dictionary using a list of keys."""
+        if not keys:
+            return
 
-        # Validate minute (0-59)
-        minute = schedule_settings.get("minute", 0)
-        self.settings["schedule_minute"] = max(0, min(59, int(minute)))
+        current_key = keys[0]
+        if len(keys) == 1:
+            data[current_key] = value
+        elif current_key in data and isinstance(data[current_key], dict):
+            self._set_nested_value(keys[1:], data[current_key], value)
+        else:
+            # Create nested dictionaries if they don't exist
+            data[current_key] = {}
+            self._set_nested_value(keys[1:], data[current_key], value)
 
-        # Update other schedule settings
-        self.settings["schedule_enabled"] = bool(schedule_settings.get("enabled", False))
-        self.settings["schedule_notification"] = schedule_settings.get("notification", "5 minutes")
-        self.settings["notifications_enabled"] = bool(schedule_settings.get("notifications_enabled", True))
-        self.settings["notification_sound"] = bool(schedule_settings.get("notification_sound", True))
-
-        self.save_settings()
-
-    def get_notification_time(self) -> int:
-        """Convert notification time setting to minutes, handling custom input"""
-        notification_setting = self.settings.get("schedule_notification", "5 minutes")
-        try:
-            if notification_setting.endswith("minutes"):
-                return int(notification_setting.split()[0])
-            elif notification_setting.endswith("hours"):
-                return int(notification_setting.split()[0]) * 60
-            elif notification_setting.isdigit():
-                return int(notification_setting)
-            else:
-                return 5
-        except ValueError:
-            return 5
-
-    def is_schedule_enabled(self) -> bool:
-        """Check if scheduling is enabled"""
-        return self.settings.get("schedule_enabled", False)
-
-    def get_schedule_time(self) -> tuple:
-        """Return schedule time as (hour, minute)"""
-        return (
-            self.settings.get("schedule_hour", 9),
-            self.settings.get("schedule_minute", 0)
-        )
-
-    def get_schedule_days(self) -> list:
-        """Return list of scheduled days"""
-        return self.settings.get("schedule_days", ["Mon", "Wed", "Fri"])
-
-    def validate_schedule(self) -> tuple[bool, str]:
-        """Validate schedule settings"""
-        if not self.settings.get("last_directory"):
-            return False, "No directory configured for scheduled updates"
-        
-        if not self.settings.get("schedule_days"):
-            return False, "No days selected for scheduled updates"
-        
-        return True, "Schedule settings are valid"
 
     def load_settings(self):
         """Load settings from JSON file"""
-        settings_path = "settings.json"
-        if os.path.exists(settings_path):
-            with open(settings_path, "r") as file:
-                self.settings.update(json.load(file))
+        if os.path.exists(self._settings_path):
+            try:
+                with open(self._settings_path, "r") as file:
+                    loaded_settings = json.load(file)
+                    # Simple update for top-level keys, could be improved for deep merge
+                    self._settings.update(loaded_settings)
+            except json.JSONDecodeError:
+                # Handle corrupted settings file
+                print(f"Warning: Could not decode settings.json. Using default settings.")
+            except Exception as e:
+                print(f"Error loading settings: {e}")
+
 
     def save_settings(self):
         """Save settings to JSON file"""
-        settings_path = "settings.json"
-        with open(settings_path, "w") as file:
-            json.dump(self.settings, file, indent=4)
+        try:
+            with open(self._settings_path, "w") as file:
+                json.dump(self._settings, file, indent=4)
+        except Exception as e:
+            print(f"Error saving settings: {e}")
 
-    def get(self, key, default=None):
-        """Get a setting value"""
-        return self.settings.get(key, default)
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Get a setting value using dot notation for nested keys (e.g., "schedule.enabled").
+        """
+        keys = key.split('.')
+        return self._get_nested_value(keys, self._settings, default)
 
-    def set(self, key, value):
-        """Set a setting value"""
-        self.settings[key] = value
+    def set(self, key: str, value: Any) -> None:
+        """
+        Set a setting value using dot notation for nested keys (e.g., "schedule.enabled").
+        Saves settings after setting the value.
+        """
+        keys = key.split('.')
+        self._set_nested_value(keys, self._settings, value)
         self.save_settings()
 
-    def get_theme_colors(self):
-        """Return theme colors"""
-        if self.settings.get("theme") == "dark":
-            return {
-                "window": "#1A202C",
-                "text": "#F7FAFC",
-                "primary": "#4299E1",
-                "secondary": "#2D3748",
-                "accent": "#48BB78",
-                "error": "#F56565",
-                "card_bg": "#2D3748",
-                "border": "#4A5568",
-                "hover": "#2B6CB0",
-                "disabled": "#718096",
-                "success": "#38A169",
-                "warning": "#D69E2E"
-            }
-        else:
-            return {
-                "window": "#F5F7FA",
-                "text": "#2C3E50",
-                "primary": "#3498DB",
-                "secondary": "#E8EEF2",
-                "accent": "#2ECC71",
-                "error": "#E74C3C",
-                "card_bg": "#FFFFFF",
-                "border": "#CBD5E0",
-                "hover": "#2980B9",
-                "disabled": "#BDC3C7",
-                "success": "#27AE60",
-                "warning": "#F39C12"
-            }
+    # Removed redundant methods:
+    # get_schedule_settings, update_schedule_settings, get_notification_time,
+    # is_schedule_enabled, get_schedule_time, get_schedule_days, validate_schedule,
+    # get_theme_colors (moved to ui/themes.py)
