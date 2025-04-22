@@ -22,6 +22,8 @@ from PyQt6.QtWidgets import (
     QSystemTrayIcon # Import QSystemTrayIcon
 )
 from PyQt6.QtGui import QIcon # Import QIcon
+        # Import Path from pathlib
+from pathlib import Path
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from AutomaticRepoUpdater.git_operations import GitOperations
 from ui.themes import get_theme_colors # Import get_theme_colors
@@ -129,15 +131,22 @@ class MainWindow(QMainWindow):
             # Replace 'app_icon.png' with the actual path to your application icon
             icon_path = "app_icon.png" # Placeholder
             if not Path(icon_path).exists():
-                # Fallback or handle missing icon
-                self.logger.warning(f"Application icon not found at {icon_path}. Tray icon may not display correctly.")
-                # Use a standard icon or None
-                self.tray_icon = QSystemTrayIcon(self) # No icon provided
+                    # Make sure the path is relative to the execution directory or absolute
+                    # Use pathlib for better path handling
+                    icon_path = Path("resources/app_icon.png") # Example path
+                    if not icon_path.exists():
+                        # Fallback or handle missing icon
+                        self.logger.warning(
+                            f"Application icon not found at {icon_path}."
+                            f"Tray icon may not display correctly."
+                        )
+                        # Use a standard icon or None
+                        self.tray_icon = QSystemTrayIcon(self) # No icon provided
             else:
                 self.tray_icon = QSystemTrayIcon(QIcon(icon_path), self)
 
-            self.tray_icon.setToolTip("Automatic Repo Updater")
-            self.tray_icon.show()
+                self.tray_icon.setToolTip("Automatic Repo Updater")
+                self.tray_icon.show()
         except Exception as e:
             self.logger.error(f"Failed to initialize system tray icon: {e}")
             self.tray_icon = None # Ensure tray_icon is None if initialization fails
@@ -146,18 +155,23 @@ class MainWindow(QMainWindow):
     def show_notification(self, title: str, message: str, level: str = "info") -> None:
         """
         Shows a desktop notification using QSystemTrayIcon.
-        Level parameter is for logging purposes, QSystemTrayIcon.showMessage doesn't use it directly.
+        Level parameter is for logging purposes,
+        QSystemTrayIcon.showMessage doesn't use it directly.
         """
         if self.app.settings.get("notifications.enabled", default=True) and self.tray_icon:
             try:
                 # QSystemTrayIcon.showMessage(title, message, icon=NoIcon, msecs=10000)
                 # icon can be QSystemTrayIcon.Information, Warning, Critical, NoIcon
                 # Mapping level to QSystemTrayIcon icon type (basic mapping)
-                icon_type = QSystemTrayIcon.Information
+                icon_type = QSystemTrayIcon.MessageIcon.Information
                 if level == "warning":
-                    icon_type = QSystemTrayIcon.Warning
-                elif level == "error":
-                    icon_type = QSystemTrayIcon.Critical
+                    icon_type = QSystemTrayIcon.MessageIcon.Warning
+                # Add other levels if needed, e.g.:
+                # elif level == "critical":
+                #     icon_type = QSystemTrayIcon.MessageIcon.Critical
+
+                # If the showMessage line above is put back in later:
+                # self.tray_icon.showMessage(title, message, icon=icon_type, msecs=10000)
 
                 self.tray_icon.showMessage(
                     f"Automatic Repo Updater - {title}",
@@ -169,22 +183,29 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 self.logger.error(f"Failed to show notification via QSystemTrayIcon: {e}")
         elif not self.app.settings.get("notifications.enabled", default=True):
-            self.logger.info("Notification not shown: Notifications are disabled in settings.")
+            self.logger.info(
+                "Notification not shown: Notifications are disabled in settings."
+            )
         else:
-            self.logger.warning("Notification not shown: System tray icon is not available.")
+            self.logger.warning(
+                "Notification not shown: System tray icon is not available."
+            )
 
 
     def select_directory(self):
         directory = QFileDialog.getExistingDirectory(
             self,
             "Select Directory",
-            self.app.settings.get("application.last_directory", "") # Use nested key
+            self.app.settings.get("application.last_directory", "")
+            # Use nested key
         )
         if directory:
-            self.app.settings.set("application.last_directory", directory) # Use nested key
+            self.app.settings.set("application.last_directory", directory)
+            # Use nested key
 
     def update_repositories(self):
-        directory = self.app.settings.get("application.last_directory", "") # Use nested key
+        directory = self.app.settings.get("application.last_directory", "")
+        # Use nested key
         if not directory:
             QMessageBox.warning(
                 self,
@@ -273,7 +294,8 @@ class MainWindow(QMainWindow):
             )
         )
         autosave.toggled.connect(
-            lambda x: self.app.settings.set("application.auto_save", x) # Use nested key
+            lambda x: self.app.settings.set("application.auto_save", x)
+            # Use nested key
         )
         repo_layout.addWidget(autosave)
 
@@ -325,7 +347,8 @@ class MainWindow(QMainWindow):
         format_combo = QComboBox()
         format_combo.addItems(["JSON", "CSV"])
         format_combo.setCurrentText(
-            self.app.settings.get("application.log_format", "JSON") # Use nested key
+            self.app.settings.get("application.log_format", "JSON")
+            # Use nested key
         )
         format_combo.currentTextChanged.connect(
             lambda x: self.app.settings.set(
@@ -445,7 +468,8 @@ class MainWindow(QMainWindow):
         # Enable scheduling checkbox
         enable_schedule = QCheckBox("Enable Scheduled Updates")
         enable_schedule.setChecked(
-            self.app.settings.get("schedule.enabled", False) # Use nested key
+            self.app.settings.get("schedule.enabled", False)
+            # Use nested key
         )
         enable_schedule.toggled.connect(
             lambda x: self.app.settings.set(
@@ -580,31 +604,41 @@ class MainWindow(QMainWindow):
 
     def _update_schedule_days(self, day, checked):
         """Update the list of scheduled days in settings."""
-        current_days = self.app.settings.get("schedule.days", []) # Use nested key
+        current_days = self.app.settings.get("schedule.days", [])
+        # Use nested key
         if checked and day not in current_days:
             current_days.append(day)
         elif not checked and day in current_days:
             current_days.remove(day)
-        self.app.settings.set("schedule.days", current_days) # Use nested key
+        self.app.settings.set("schedule.days", current_days)
+        # Use nested key
 
     def _update_schedule_time(self, hour, minute):
         """Update the scheduled hour and minute in settings."""
-        self.app.settings.set("schedule.hour", int(hour)) # Use nested key
-        self.app.settings.set("schedule.minute", int(minute)) # Use nested key
+        self.app.settings.set("schedule.hour", int(hour))
+        # Use nested key
+        self.app.settings.set("schedule.minute", int(minute))
+        # Use nested key
 
     def _update_schedule(self):
         """Update the scheduler based on current settings."""
         # This method would likely call a method on the scheduler instance
         # to reconfigure the scheduled task based on the updated settings.
         # Example: self.app.scheduler.configure_task()
-        self.logger.info("Schedule settings updated. Scheduler needs to be reconfigured.")
-        # Placeholder: In a real app, you'd call a method on self.app.scheduler
-        # self.app.scheduler.update_schedule_from_settings() # Assuming such a method exists
+        self.logger.info(
+            "Schedule settings updated." \
+            "Scheduler needs to be reconfigured."
+        )
+        # Placeholder: In a real app,
+        # you'd call a method on self.app.scheduler
+        # self.app.scheduler.update_schedule_from_settings()
+        # # Assuming such a method exists
 
     def _refresh_logs(self):
         """Refresh the logs displayed in the logs tab."""
         # This method needs to read the log file and display its content.
-        # Since we switched to standard logging, we need to read the log file directly.
+        # Since we switched to standard logging,
+        # we need to read the log file directly.
         log_file_path = Path.home() / '.autorepo' / 'logs' / 'autorepo.log'
         log_content = ""
         if log_file_path.exists():
@@ -646,14 +680,18 @@ class MainWindow(QMainWindow):
         # based on the selected level before displaying it.
         # Since the current log format is simple text, this would involve
         # parsing each line.
-        self.logger.info(f"Log filter set to: {filter_level}. Filtering not fully implemented for current log format.")
+        self.logger.info(
+            f"Log filter set to: {filter_level}."
+            f"Filtering not fully implemented for current log format."
+        )
         # Re-implement filtering logic here based on the text in self.logs_text
         # or by re-reading and parsing the log file.
 
 
     def _apply_theme(self):
         """Apply the selected theme to the application."""
-        theme_name = self.app.settings.get("application.theme", "light") # Use nested key
+        theme_name = self.app.settings.get("application.theme", "light")
+        # Use nested key
         colors = get_theme_colors(theme_name)
         # Apply stylesheet based on colors
         stylesheet = f"""
@@ -748,9 +786,11 @@ class MainWindow(QMainWindow):
 
     def _toggle_theme(self):
         """Toggle between light and dark themes."""
-        current_theme = self.app.settings.get("application.theme", "light") # Use nested key
+        current_theme = self.app.settings.get("application.theme", "light")
+        # Use nested key
         new_theme = "dark" if current_theme == "light" else "light"
-        self.app.settings.set("application.theme", new_theme) # Use nested key
+        self.app.settings.set("application.theme", new_theme)
+        # Use nested key
         self._apply_theme()
 
 

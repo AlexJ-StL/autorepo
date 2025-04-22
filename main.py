@@ -77,16 +77,34 @@ class AutomaticRepoUpdater:
             self.logger.error("Application cannot start: No GUI and not a scheduled run.")
             sys.exit(1)
 
+
     def _run_scheduled_update(self) -> None:
         """Execute a scheduled update for repositories in the configured directory."""
         try:
+            # Fetch directory from settings
             directory: Optional[str] = self.settings.get("application.last_directory")
-            notifications_enabled: bool = bool(self.settings.get("notifications.enabled", default=True))
 
+            # === VITAL CHECK ===
+            # Check if directory is None or empty string
             if not directory:
                 self.logger.error("Scheduled update aborted: No directory configured.")
-                self.main_window.show_notification("Update Failed", "No directory configured.", level="error")
+                # (Optional notification code here...)
+                if self.main_window:
+                    self.main_window.show_notification(
+                        "Update Failed", "No directory configured.", level="error"
+                    )
+                else:
+                    # Log that UI isn't available if it's not initialized
+                    self.logger.warning("Cannot show notification: MainWindow is not available.")
+
+                # EXIT the function here if the directory is invalid.
+                # This tells the type checker that the code below
+                # will NOT execute if 'directory' is None or "".
                 return
+            # ====================
+
+            # If the code reaches this point, 'directory' MUST be a non-empty string.
+            # The type checker should now be satisfied.
 
             self.logger.info(f"Scheduled update started for directory: {directory}")
             if self.main_window: # Only show GUI notifications if GUI is initialized
@@ -94,6 +112,72 @@ class AutomaticRepoUpdater:
                     "Starting Update",
                     "Scheduled repository update is starting...",
                 ) # Duration is handled within MainWindow.show_notification
+
+            # Import GitOperations here to keep it scoped to this method
+            # Ensure this import path is correct for your project structure
+            from AutomaticRepoUpdater.git_operations import GitOperations
+            git_ops = GitOperations(self.settings, self.logger)
+
+            # Scan and update repositories
+            repos = git_ops.scan_directories(directory) # 'directory' is now known to be 'str'
+            self.logger.info(f"Found {len(repos)} repositories to check.")
+            update_count = 0
+            error_count = 0
+
+            for repo_path in repos:
+                self.logger.debug(f"Attempting to update {repo_path}")
+                success, message = git_ops.pull_repository(str(repo_path))
+                if success:
+                    update_count += 1
+                    self.logger.info(f"Successfully updated {repo_path}: {message}")
+                else:
+                    error_count += 1
+                    self.logger.error(f"Failed to update {repo_path}: {message}")
+
+            # Show completion notification
+            completion_message = f"Update complete: {update_count} successful, {error_count} failed."
+            self.logger.info(completion_message)
+            if self.main_window: # Only show GUI notifications if GUI is initialized
+                self.main_window.show_notification(
+                    "Update Complete",
+                    completion_message,
+                ) # Duration is handled within MainWindow.show_notification
+
+        except ImportError as e:
+            self.logger.error(f"Failed to import required module for scheduled update: {e}")
+            if self.main_window: # Only show GUI notifications if GUI is initialized
+                self.main_window.show_notification("Update Failed", f"Import error: {e}", level="error")
+        except Exception as e:
+            self.logger.error(f"An unexpected error occurred during scheduled update: {e}", exc_info=True)
+            if self.main_window: # Only show GUI notifications if GUI is initialized
+                self.main_window.show_notification("Update Failed", f"Error: {e}", level="error")
+        try:
+            directory: Optional[str] = self.settings.get("application.last_directory")
+            notifications_enabled: bool = bool(
+                self.settings.get("notifications.enabled", default=True)
+            )
+
+            directory = self.settings.get("repository_directory")
+            if directory is None or directory == "":
+                self.logger.error(
+                    "Scheduled update aborted: No directory configured."
+                )
+                if self.main_window:
+                    self.main_window.show_notification(
+                        "Update Failed",
+                        "No directory configured.",
+                        level="error"
+                    )
+                return # Exit the function if directory is not configured
+
+            self.logger.info(f"Scheduled update started for directory: {directory}")
+            if self.main_window: # Only show GUI notifications if GUI is initialized
+                self.main_window.show_notification(
+                    "Starting Update",
+                    "Scheduled repository update is starting...",
+                ) # Duration is handled within MainWindow.show_notification
+            else: # Add else for the UI check to log warning if UI is not available
+                self.logger.warning("Cannot show notification: MainWindow is not available.")
 
             # Import GitOperations here to keep it scoped to this method
             from AutomaticRepoUpdater.git_operations import GitOperations
