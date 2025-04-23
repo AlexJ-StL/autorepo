@@ -6,10 +6,10 @@ from typing import Optional
 from PyQt6.QtWidgets import QApplication
 # Removed desktop_notifier import
 
-from ui.main_window import MainWindow
-from utils.settings import Settings
+from src.autorepo.ui.main_window import MainWindow
+from src.autorepo.utils.settings import Settings
 import logging
-from utils.logger import setup_logging, get_logger
+from src.autorepo.utils.logger import setup_logging, get_logger
 from scheduler import Scheduler
 # Delay import of GitOperations to avoid circular dependencies or heavy import
 # from AutomaticRepoUpdater.git_operations import GitOperations
@@ -115,7 +115,7 @@ class AutomaticRepoUpdater:
 
             # Import GitOperations here to keep it scoped to this method
             # Ensure this import path is correct for your project structure
-            from AutomaticRepoUpdater.git_operations import GitOperations
+            from src.autorepo.automatic_repo_updater.git_operations import GitOperations
             git_ops = GitOperations(self.settings, self.logger)
 
             # Scan and update repositories
@@ -180,7 +180,7 @@ class AutomaticRepoUpdater:
                 self.logger.warning("Cannot show notification: MainWindow is not available.")
 
             # Import GitOperations here to keep it scoped to this method
-            from AutomaticRepoUpdater.git_operations import GitOperations
+            from src.autorepo.automatic_repo_updater.git_operations import GitOperations
             git_ops = GitOperations(self.settings, self.logger)
 
             # Scan and update repositories

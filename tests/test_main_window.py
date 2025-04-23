@@ -1,6 +1,6 @@
 import pytest
 from PyQt6.QtWidgets import QApplication
-from ui.main_window import MainWindow
+from src.autorepo.ui.main_window import MainWindow
 
 @pytest.fixture
 def app(qtbot):
