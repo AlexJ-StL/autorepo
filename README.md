@@ -20,20 +20,23 @@ AutoRepo is a Python-based application designed for Windows that automates the p
 ### Installation Steps
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/yourusername/autorepo.git
+    git clone https://github.com/AlexJ-StL/autorepo.git
     cd autorepo
     ```
-    *(Replace `yourusername` with your actual GitHub username)*
 
 2.  **Create and activate a virtual environment (Recommended):**
+    *Using `uv`:*
     ```bash
-    # Using Python's built-in venv
-    python -m venv .venv
+    uv venv
     source .venv/bin/activate  # On Windows Git Bash or Linux/macOS
     # or
     .\.venv\Scripts\activate  # On Windows Command Prompt or PowerShell
     ```
-    *Alternatively, `uv` can manage virtual environments automatically in many cases.*
+    *Alternatively, using Python's built-in `venv`:*
+    ```bash
+    python -m venv .venv
+    # Activate as shown above
+    ```
 
 3.  **Install dependencies using uv:**
     *Option A: Using `pyproject.toml` (if dependencies are fully listed there)*
@@ -109,6 +112,7 @@ autorepo/
 │   └── src/
 │       └── AutomaticRepoUpdater.md
 ├── autorepo-cline_task_dec-20-2024_9-21-34-am.md
+├── Autorepo_directory_tree-L3.txt
 ├── cline_task_dec-20-2024_12-42-12-pm.md
 ├── LICENSE
 ├── llm-prompting-notepad.txt
