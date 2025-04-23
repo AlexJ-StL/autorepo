@@ -3,8 +3,8 @@ requires-python = ">=3.13.0"
 
 [[package]]
 name = "autorepo"
-version = "0.1.0"
-source = { virtual = "." }
+version = "0.2.0"
+source = { editable = "." }
 dependencies = [
     { name = "gitpython" },
     { name = "pyqt6" },

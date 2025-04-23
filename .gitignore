@@ -81,10 +81,11 @@ settings.json # User settings, should not be version controlled
 logs/ # Log directory if created
 
 # Development Related Files
-Autorepo_directory_tree-L3.txt
+autorepo-cline_task_dec-20-2024_9-21-34-am.txt
+cline_task_dec-20-2024_12-42-12-pm.md
+custom_instructions.txt
 llm-prompting-notepad.txt
-autorepo-cline_task_*.md
-cline_task_*.md
+reordered_directory_tree_20250423.txt
 
 # uUV related files
 uv.lock
