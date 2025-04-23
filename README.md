@@ -101,21 +101,18 @@ AutoRepo is a Python-based application designed for Windows that automates the p
 autorepo/
 ├── __pycache__/
 │   └── scheduler.cpython-313.pyc
-├── AutomaticRepoUpdater/
-│   ├── __init__.py
-│   ├── __pycache__/
-│   │   ├── __init__.cpython-311.pyc
-│   │   ├── __init__.cpython-313.pyc
-│   │   ├── git_operations.cpython-311.pyc
-│   │   └── git_operations.cpython-313.pyc
-│   ├── git_operations.py
-│   └── src/
-│       └── AutomaticRepoUpdater.md
-├── autorepo-cline_task_dec-20-2024_9-21-34-am.md
-├── Autorepo_directory_tree-L3.txt
-├── cline_task_dec-20-2024_12-42-12-pm.md
+├── docs/
+│   ├── Automatic_Repo_Updater.md
+│   ├── autorepo-cline_task_dec-20-2024_9-21-34-am.md
+│   ├── autorepo.md
+│   ├── cline_task_dec-20-2024_12-42-12-pm.md
+│   ├── custom_instructions.txt
+│   ├── llm-prompting-notepad.txt
+│   ├── reordered_directory_tree_20250423.txt
+│   ├── tests.md
+│   ├── ui.md
+│   └── utils.md
 ├── LICENSE
-├── llm-prompting-notepad.txt
 ├── main.py
 ├── pyproject.toml
 ├── README.md
@@ -123,8 +120,25 @@ autorepo/
 ├── scheduler.py
 ├── settings.json
 ├── src/
-│   ├── autorepo.md
-│   └── custom_instructions.txt
+│   └── autorepo/
+│       ├── __init__.py
+│       ├── __pycache__/
+│       │   └── __init__.cpython-313.pyc
+│       ├── automatic_repo_updater/
+│       │   ├── __init__.py
+│       │   ├── __pycache__/
+│       │   └── git_operations.py
+│       ├── ui/
+│       │   ├── __init__.py
+│       │   ├── __pycache__/
+│       │   ├── main_window.py
+│       │   ├── themes.py
+│       │   └── ui.py
+│       └── utils/
+│           ├── __init__.py
+│           ├── __pycache__/
+│           ├── logger.py
+│           └── settings.py
 ├── tests/
 │   ├── __init__.py
 │   ├── __pycache__/
@@ -134,36 +148,7 @@ autorepo/
 │   │   ├── test_main_window.cpython-311-pytest-8.3.4.pyc
 │   │   ├── test_main_window.cpython-313-pytest-8.3.4.pyc
 │   │   └── test_main_window.cpython-313-pytest-8.3.5.pyc
-│   ├── src/
-│   │   └── tests.md
 │   └── test_main_window.py
-├── ui/
-│   ├── __init__.py
-│   ├── __pycache__/
-│   │   ├── __init__.cpython-311.pyc
-│   │   ├── __init__.cpython-313.pyc
-│   │   ├── main_window.cpython-311.pyc
-│   │   ├── main_window.cpython-313.pyc
-│   │   ├── themes.cpython-311.pyc
-│   │   └── themes.cpython-313.pyc
-│   ├── main_window.py
-│   ├── src/
-│   │   └── ui.md
-│   ├── themes.py
-│   └── ui.py
-├── utils/
-│   ├── __init__.py
-│   ├── __pycache__/
-│   │   ├── __init__.cpython-311.pyc
-│   │   ├── __init__.cpython-313.pyc
-│   │   ├── logger.cpython-311.pyc
-│   │   ├── logger.cpython-313.pyc
-│   │   ├── settings.cpython-311.pyc
-│   │   └── settings.cpython-313.pyc
-│   ├── logger.py
-│   ├── settings.py
-│   └── src/
-│       └── utils.md
 └── uv.lock
 ```
 
