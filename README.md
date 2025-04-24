@@ -150,7 +150,9 @@ The application stores its configuration in `settings.json` located in the proje
 -   Updated project version to 0.2.0 in `pyproject.toml`.
 -   Updated `README.md` significantly to reflect current features, installation steps (using `uv`), configuration, and directory structure.
 -   Corrected previous `AttributeError` issues (`_toggle_theme`, `_clear_logs`, `last_directory` access).
--   The project's structure during development was corrected to align with typical src folder type python projects.
+-   Refactored project structure to use the standard `src` layout for better organization and packaging.
+-   Updated import paths accordingly.
+-   Moved module-specific documentation (`.md` files) into the `docs/` directory.
 
 ### Version 0.1.0 (2024-11-21)
 -   Initial release.
