@@ -1,4 +1,0 @@
-GitPython
-PyQt6
-pytest
-pywin32==310

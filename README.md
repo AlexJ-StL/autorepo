@@ -32,32 +32,13 @@ AutoRepo is a Python-based application designed for Windows that automates the p
     # or
     .\.venv\Scripts\activate  # On Windows Command Prompt or PowerShell
     ```
-    *Alternatively, using Python's built-in `venv`:*
-    ```bash
-    python -m venv .venv
-    # Activate as shown above
-    ```
 
 3.  **Install dependencies using uv:**
-    *Option A: Using `pyproject.toml` (if dependencies are fully listed there)*
+    *Using `pyproject.toml`*
     ```bash
-    uv pip install .
-    # For development dependencies (if defined in pyproject.toml)
-    # uv pip install ".[dev]"
-    ```
-    *Option B: Using `requirements.txt` (if present)*
-    ```bash
-    uv pip install -r requirements.txt
-    # For development dependencies (if in requirements-dev.txt)
-    # uv pip install -r requirements-dev.txt
-    ```
-    *Choose the option that matches how your dependencies are managed.*
+    uv pip install . # Installs the project and its core dependencies
 
 4.  **Run the application:**
-    ```bash
-    python main.py
-    ```
-    *(Or, if using uv's run command)*
     ```bash
     uv run python main.py
     ```
@@ -72,7 +53,7 @@ AutoRepo is a Python-based application designed for Windows that automates the p
 -   **Real-time Feedback:** Status bar provides updates on ongoing operations.
 -   **Responsive:** Multi-threaded updates ensure the UI remains responsive.
 
-### Git Operations (`AutomaticRepoUpdater/git_operations.py`)
+### Git Operations (`src/autorepo/automatic_repo_updater/git_operations.py`)
 -   **Repository Scanning:** Recursively finds Git repositories within the selected directory up to a specified depth.
 -   **Safe Pulling:** Fetches and merges updates (`git pull`) without pushing changes.
 -   **Dirty Repository Handling:** Detects repositories with uncommitted changes and logs warnings (configurable behavior planned).
@@ -84,13 +65,13 @@ AutoRepo is a Python-based application designed for Windows that automates the p
 -   **Enable/Disable:** Easily toggle the scheduled task on or off.
 -   **Notifications:** Uses `win10toast` to provide notifications for scheduled runs (start/completion/failure).
 
-### Logging System (`utils/logger.py`)
+### Logging System (`src/autorepo/utils/logger.py`)
 -   **Detailed Tracking:** Logs events with timestamps, levels (INFO, ERROR, WARNING), and messages.
 -   **Configurable Format:** Choose between JSON or CSV log formats via settings.
 -   **Log Retention:** Set the number of days logs should be kept (configurable).
 -   **In-App Viewer:** Dedicated "Logs" tab displays recent logs with filtering (All, Info, Warning, Error, Success) and clearing capabilities.
 
-### Configuration (`utils/settings.py`, `settings.json`)
+### Configuration (`src/autorepo/utils/settings.py`, `settings.json`)
 -   **Persistent Settings:** Configuration is saved in `settings.json` in the project root directory.
 -   **UI Controls:** Most settings are configurable through the "Settings" tab in the GUI.
 -   **Key Settings:** Theme, max repository scan depth, auto-save preference, last selected directory, log format, log retention, schedule details (enabled, days, time), notification preferences.
@@ -103,12 +84,7 @@ autorepo/
 │   └── scheduler.cpython-313.pyc
 ├── docs/
 │   ├── Automatic_Repo_Updater.md
-│   ├── autorepo-cline_task_dec-20-2024_9-21-34-am.md
 │   ├── autorepo.md
-│   ├── cline_task_dec-20-2024_12-42-12-pm.md
-│   ├── custom_instructions.txt
-│   ├── llm-prompting-notepad.txt
-│   ├── reordered_directory_tree_20250423.txt
 │   ├── tests.md
 │   ├── ui.md
 │   └── utils.md
@@ -116,7 +92,6 @@ autorepo/
 ├── main.py
 ├── pyproject.toml
 ├── README.md
-├── requirements.txt
 ├── scheduler.py
 ├── settings.json
 ├── src/
@@ -175,6 +150,7 @@ The application stores its configuration in `settings.json` located in the proje
 -   Updated project version to 0.2.0 in `pyproject.toml`.
 -   Updated `README.md` significantly to reflect current features, installation steps (using `uv`), configuration, and directory structure.
 -   Corrected previous `AttributeError` issues (`_toggle_theme`, `_clear_logs`, `last_directory` access).
+-   The project's structure during development was corrected to align with typical src folder type python projects.
 
 ### Version 0.1.0 (2024-11-21)
 -   Initial release.

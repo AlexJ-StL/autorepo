@@ -1,4 +1,25 @@
 {
+    "schedule": {
+        "enabled": true,
+        "days": [
+            "Fri"
+        ],
+        "hour": 9,
+        "minute": 0,
+        "notification_time": "5 minutes"
+    },
+    "notifications": {
+        "enabled": true,
+        "sound": true
+    },
+    "application": {
+        "theme": "light",
+        "max_depth": 3,
+        "auto_save": true,
+        "last_directory": "C:/Users/AlexJ/Documents/Coding/Repos",
+        "log_format": "JSON",
+        "log_retention": 30
+    },
     "schedule_enabled": false,
     "schedule_days": [
         "Mon",

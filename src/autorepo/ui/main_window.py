@@ -26,7 +26,7 @@ from PyQt6.QtGui import QIcon # Import QIcon
 from pathlib import Path
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from src.autorepo.automatic_repo_updater.git_operations import GitOperations
-from ui.themes import get_theme_colors # Import get_theme_colors
+from src.autorepo.ui.themes import get_theme_colors # Import get_theme_colors
 
 class MainWindow(QMainWindow):
     def __init__(self, app):
